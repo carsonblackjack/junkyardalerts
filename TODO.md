@@ -1,0 +1,34 @@
+# 🚗 YardWatch
+
+## Sprint 1 - Foundation
+- [x] Create GitHub repository
+- [x] Install Python
+- [x] Install Git
+- [x] Build first scraper
+- [x] Create SQLite database
+- [ ] Save scraper results to database
+- [ ] Verify duplicate detection
+
+## Sprint 2 - Inventory Engine
+- [ ] Scrape every make
+- [ ] Scrape every model
+- [ ] Save complete inventory
+- [ ] Support Trusty Pick-A-Part
+
+## Sprint 3 - Notifications
+- [ ] Email alerts
+- [ ] SMS alerts
+- [ ] Daily inventory summary
+
+## Sprint 4 - Web App
+- [ ] User accounts
+- [ ] Watchlists
+- [ ] Dashboard
+- [ ] Admin panel
+
+## Future Ideas
+- [ ] Multiple junkyards
+- [ ] Mobile app
+- [ ] Push notifications
+- [ ] VIN decoding
+- [ ] Photos of vehicles
