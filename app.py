@@ -1,7 +1,7 @@
 import time
 from datetime import date
 
-from database.database import initialize_database, save_vehicle
+from database.database import get_inventory_counts_by_yard, initialize_database, save_vehicle
 from notifications.notifier import send_email
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES, JalopyScraper
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES, TrustyPapScraper
@@ -62,3 +62,13 @@ if new_vehicles:
     body = "\n".join(new_vehicles)
     send_email(subject, body)
     print("Sent email alert.")
+
+# Daily summary, sent every run regardless of whether anything new turned up.
+counts_by_yard = get_inventory_counts_by_yard()
+summary_lines = [f"{yard}: {count} vehicles" for yard, count in counts_by_yard]
+summary_body = (
+    f"Checked {total_count} vehicles today, {new_count} new.\n\n"
+    "Current inventory:\n" + "\n".join(summary_lines)
+)
+send_email("YardWatch Daily Summary", summary_body)
+print("Sent daily summary email.")

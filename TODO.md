@@ -17,8 +17,10 @@
 
 ## Sprint 3 - Notifications
 - [x] Email alerts
+- [x] Daily inventory summary
+
+## Premium Features (later)
 - [ ] SMS alerts
-- [ ] Daily inventory summary
 
 ## Sprint 4 - Web App
 - [ ] User accounts

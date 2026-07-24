@@ -49,3 +49,16 @@ def save_vehicle(year, make, model, row_location, yard, date_found):
     conn.close()
 
     return is_new
+
+
+def get_inventory_counts_by_yard():
+    """Return [(yard, vehicle_count), ...] for everything currently saved."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT yard, COUNT(*) FROM vehicles GROUP BY yard")
+    counts = cursor.fetchall()
+
+    conn.close()
+
+    return counts
