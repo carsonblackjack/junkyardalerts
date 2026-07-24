@@ -13,7 +13,7 @@
 - [x] Scrape every make
 - [x] Scrape every model
 - [x] Save complete inventory
-- [ ] Support Trusty Pick-A-Part
+- [x] Support Trusty Pick-A-Part
 
 ## Sprint 3 - Notifications
 - [ ] Email alerts
