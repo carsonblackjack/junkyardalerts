@@ -33,6 +33,18 @@ def initialize_database():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS watchlist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            make TEXT NOT NULL,
+            model TEXT NOT NULL DEFAULT '',
+            created_at TEXT,
+            UNIQUE(user_id, make, model),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -93,6 +105,89 @@ def get_user_by_email(email):
     conn.close()
 
     return user
+
+
+def add_watchlist_item(user_id, make, model, created_at):
+    """Add a make (and optionally a model) to a user's watchlist. Leaving
+    model blank watches every model of that make. Returns True if added,
+    False if that make/model was already on their watchlist."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO watchlist (user_id, make, model, created_at)
+            VALUES (?, ?, ?, ?)
+        """, (user_id, make, model, created_at))
+        conn.commit()
+        added = True
+    except sqlite3.IntegrityError:
+        added = False
+
+    conn.close()
+
+    return added
+
+
+def remove_watchlist_item(watchlist_id, user_id):
+    """Delete a watchlist item, only if it belongs to this user."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM watchlist WHERE id = ? AND user_id = ?", (watchlist_id, user_id))
+
+    conn.commit()
+    conn.close()
+
+
+def get_watchlist(user_id):
+    """Return [(id, make, model), ...] for everything this user is watching."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, make, model FROM watchlist WHERE user_id = ? ORDER BY make, model", (user_id,))
+    items = cursor.fetchall()
+
+    conn.close()
+
+    return items
+
+
+def get_matching_vehicles(user_id):
+    """Return every vehicle in inventory that matches this user's
+    watchlist (make always, model only if they specified one)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT DISTINCT v.year, v.make, v.model, v.row_location, v.yard, v.date_found
+        FROM watchlist w
+        JOIN vehicles v
+            ON UPPER(v.make) = UPPER(w.make)
+            AND (w.model = '' OR UPPER(v.model) = UPPER(w.model))
+        WHERE w.user_id = ?
+        ORDER BY v.date_found DESC
+    """, (user_id,))
+    vehicles = cursor.fetchall()
+
+    conn.close()
+
+    return vehicles
+
+
+def get_distinct_models_for_make(make):
+    """Return every model we've actually seen in inventory for this make, sorted."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT DISTINCT model FROM vehicles WHERE UPPER(make) = UPPER(?) ORDER BY model
+    """, (make,))
+    models = [row[0] for row in cursor.fetchall()]
+
+    conn.close()
+
+    return models
 
 
 def get_inventory_counts_by_yard():

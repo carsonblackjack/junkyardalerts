@@ -1,6 +1,70 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Welcome, {{ email }}</h2>
-<p>Your watchlist will show up here soon.</p>
+
+<h3>Your Watchlist</h3>
+<form method="post" action="{{ url_for('routes.watchlist_add') }}">
+    <label>Make
+        <select name="make" id="make-select" required>
+            <option value="">Select Make</option>
+            {% for make in makes %}
+                <option value="{{ make }}">{{ make }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Model (optional)
+        <select name="model" id="model-select">
+            <option value="">Any model</option>
+        </select>
+    </label>
+    <button type="submit">Add to Watchlist</button>
+</form>
+
+{% if watchlist %}
+    <ul>
+        {% for item_id, make, model in watchlist %}
+            <li>
+                {{ make }}{% if model %} - {{ model }}{% else %} (any model){% endif %}
+                <form method="post" action="{{ url_for('routes.watchlist_remove', item_id=item_id) }}" style="display: inline;">
+                    <button type="submit">Remove</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>You're not watching anything yet. Add a make above.</p>
+{% endif %}
+
+<h3>Matches Found</h3>
+{% if matches %}
+    <table>
+        <thead>
+            <tr>
+                <th>Year</th>
+                <th>Make</th>
+                <th>Model</th>
+                <th>Row</th>
+                <th>Yard</th>
+                <th>Found</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for year, make, model, row_location, yard, date_found in matches %}
+                <tr>
+                    <td>{{ year }}</td>
+                    <td>{{ make }}</td>
+                    <td>{{ model }}</td>
+                    <td>{{ row_location }}</td>
+                    <td>{{ yard }}</td>
+                    <td>{{ date_found }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No matches yet. Once a watched car shows up in inventory, it'll appear here.</p>
+{% endif %}
+
 <a href="{{ url_for('routes.logout') }}">Log Out</a>
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 {% endblock %}

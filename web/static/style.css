@@ -1,6 +1,6 @@
 body {
     font-family: Arial, sans-serif;
-    max-width: 500px;
+    max-width: 800px;
     margin: 40px auto;
     padding: 0 20px;
     color: #222;
@@ -45,4 +45,34 @@ button {
     padding: 10px;
     border-radius: 4px;
     list-style: none;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+ul li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0;
+}
+
+ul li button {
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    background-color: #c53030;
 }
