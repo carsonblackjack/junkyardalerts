@@ -16,7 +16,7 @@
 - [x] Support Trusty Pick-A-Part
 
 ## Sprint 3 - Notifications
-- [ ] Email alerts
+- [x] Email alerts
 - [ ] SMS alerts
 - [ ] Daily inventory summary
 

@@ -2,6 +2,7 @@ import time
 from datetime import date
 
 from database.database import initialize_database, save_vehicle
+from notifications.notifier import send_email
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES, JalopyScraper
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES, TrustyPapScraper
 
@@ -15,6 +16,7 @@ initialize_database()
 
 total_count = 0
 new_count = 0
+new_vehicles = []
 
 for yard in YARDS:
     print(f"\n=== {yard['name']} ===")
@@ -42,6 +44,10 @@ for yard in YARDS:
 
             if is_new:
                 new_count += 1
+                new_vehicles.append(
+                    f"{vehicle['year']} {vehicle['make']} {vehicle['model']} "
+                    f"- Row {vehicle['row']} - {yard['name']}"
+                )
                 print(
                     f"  [NEW] {vehicle['year']} {vehicle['make']} "
                     f"{vehicle['model']} - Row {vehicle['row']}"
@@ -50,3 +56,9 @@ for yard in YARDS:
         time.sleep(1)  # wait a bit between checks so we don't hammer their site
 
 print(f"\nDone. Checked {total_count} vehicles, found {new_count} new.")
+
+if new_vehicles:
+    subject = f"YardWatch: {new_count} new vehicle(s) found"
+    body = "\n".join(new_vehicles)
+    send_email(subject, body)
+    print("Sent email alert.")
