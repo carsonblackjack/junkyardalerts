@@ -1,11 +1,25 @@
 import requests
 from bs4 import BeautifulSoup
 
+# Every make this yard's website lets you search for. Leaving "model" blank
+# when searching returns every model for that make, so looping over this
+# list is enough to pull the whole yard's inventory.
+ALL_MAKES = [
+    "ACURA", "AMC", "AUDI", "BMW", "BUICK", "CADILLAC", "CHEVROLET",
+    "CHRYSLER", "DAEWOO", "DATSUN", "DODGE", "FIAT", "FORD", "GEO", "GMC",
+    "HONDA", "HYUNDAI", "IBIZA", "INFINITI", "INTERNATIONAL", "ISUZU",
+    "JAGUAR", "JEEP", "KIA", "LAND ROVER", "LEXUS", "LINCOLN", "MAZDA",
+    "MERCEDES-BENZ", "MERCURY", "MINI", "MITSUBISHI", "NASH", "NISSAN",
+    "OLDSMOBILE", "OPEL", "PACKARD", "PEUGEOT", "PLYMOUTH", "PONTIAC",
+    "PORSCHE", "RAM", "SAAB", "SATURN", "SCION", "SMART", "STUDEBAKER",
+    "SUBARU", "SUZUKI", "TOYOTA", "TRIUMPH", "VOLKSWAGEN", "VOLVO",
+]
+
 
 class JalopyScraper:
     URL = "https://inventory.pickapartjalopyjungle.com/"
 
-    def search(self, make, model):
+    def search(self, make, model=""):
         payload = {
             "YardId": "1020",
             "VehicleMake": make,

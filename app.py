@@ -1,58 +1,43 @@
-import requests
-from bs4 import BeautifulSoup
+import time
 from datetime import date
+
 from database.database import initialize_database, save_vehicle
-
-URL = "https://inventory.pickapartjalopyjungle.com/"
-
-payload = {
-    "YardId": "1020",
-    "VehicleMake": "SUBARU",
-    "VehicleModel": "B9 TRIBECA"
-}
+from scraper.jalopy import ALL_MAKES, JalopyScraper
 
 initialize_database()
+scraper = JalopyScraper()
 
-print("Searching inventory...")
+total_count = 0
+new_count = 0
 
-response = requests.post(URL, data=payload)
+for make in ALL_MAKES:
+    print(f"Checking {make}...")
 
-print(f"Status Code: {response.status_code}")
+    try:
+        vehicles = scraper.search(make)
+    except Exception as e:
+        print(f"  Skipped {make}, something went wrong: {e}")
+        continue
 
-soup = BeautifulSoup(response.text, "lxml")
+    for vehicle in vehicles:
+        total_count += 1
 
-table = soup.find("table")
+        is_new = save_vehicle(
+            year=vehicle["year"],
+            make=vehicle["make"],
+            model=vehicle["model"],
+            row_location=vehicle["row"],
+            yard="Jalopy Jungle",
+            date_found=str(date.today())
+        )
 
-if table:
-    print("\nInventory Found:\n")
-
-    rows = table.find_all("tr")[1:]
-
-    for row in rows:
-        cols = [c.get_text(strip=True) for c in row.find_all("td")]
-
-        if len(cols) >= 4:
-            year = cols[0]
-            make = cols[1]
-            model = cols[2]
-            row_location = cols[3]
-
-            is_new = save_vehicle(
-                year=year,
-                make=make,
-                model=model,
-                row_location=row_location,
-                yard="Jalopy Jungle",
-                date_found=str(date.today())
-            )
-
-            status = "NEW" if is_new else "already seen"
-
+        if is_new:
+            new_count += 1
             print(
-                f"[{status}] Year: {year} | "
-                f"Make: {make} | "
-                f"Model: {model} | "
-                f"Row: {row_location}"
+                f"  [NEW] {vehicle['year']} {vehicle['make']} "
+                f"{vehicle['model']} - Row {vehicle['row']}"
             )
-else:
-    print("No inventory table found.")
+
+    time.sleep(1)  # wait a bit between checks so we don't hammer their site
+
+print(f"\nDone. Checked {total_count} vehicles, found {new_count} new.")

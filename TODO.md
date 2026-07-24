@@ -10,9 +10,9 @@
 - [x] Verify duplicate detection
 
 ## Sprint 2 - Inventory Engine
-- [ ] Scrape every make
-- [ ] Scrape every model
-- [ ] Save complete inventory
+- [x] Scrape every make
+- [x] Scrape every model
+- [x] Save complete inventory
 - [ ] Support Trusty Pick-A-Part
 
 ## Sprint 3 - Notifications
