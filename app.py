@@ -1,3 +1,4 @@
+import sys
 import time
 from datetime import date
 
@@ -63,12 +64,15 @@ if new_vehicles:
     send_email(subject, body)
     print("Sent email alert.")
 
-# Daily summary, sent every run regardless of whether anything new turned up.
-counts_by_yard = get_inventory_counts_by_yard()
-summary_lines = [f"{yard}: {count} vehicles" for yard, count in counts_by_yard]
-summary_body = (
-    f"Checked {total_count} vehicles today, {new_count} new.\n\n"
-    "Current inventory:\n" + "\n".join(summary_lines)
-)
-send_email("YardWatch Daily Summary", summary_body)
-print("Sent daily summary email.")
+# Only send the full daily summary once a day (the scheduled 8am run passes
+# --summary). The other runs during the day still alert on new finds above,
+# they just skip this repetitive email.
+if "--summary" in sys.argv:
+    counts_by_yard = get_inventory_counts_by_yard()
+    summary_lines = [f"{yard}: {count} vehicles" for yard, count in counts_by_yard]
+    summary_body = (
+        f"Checked {total_count} vehicles today, {new_count} new.\n\n"
+        "Current inventory:\n" + "\n".join(summary_lines)
+    )
+    send_email("YardWatch Daily Summary", summary_body)
+    print("Sent daily summary email.")
