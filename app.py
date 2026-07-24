@@ -37,20 +37,22 @@ if table:
             model = cols[2]
             row_location = cols[3]
 
-            print(
-                f"Year: {year} | "
-                f"Make: {make} | "
-                f"Model: {model} | "
-                f"Row: {row_location}"
-            )
-
-            save_vehicle(
+            is_new = save_vehicle(
                 year=year,
                 make=make,
                 model=model,
                 row_location=row_location,
                 yard="Jalopy Jungle",
                 date_found=str(date.today())
+            )
+
+            status = "NEW" if is_new else "already seen"
+
+            print(
+                f"[{status}] Year: {year} | "
+                f"Make: {make} | "
+                f"Model: {model} | "
+                f"Row: {row_location}"
             )
 else:
     print("No inventory table found.")

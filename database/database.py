@@ -29,6 +29,11 @@ def initialize_database():
 
 
 def save_vehicle(year, make, model, row_location, yard, date_found):
+    """Insert a vehicle if it hasn't been seen before.
+
+    Returns True if this was a new vehicle, False if it was a duplicate
+    (already in the DB per the UNIQUE constraint) and the insert was skipped.
+    """
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -38,5 +43,9 @@ def save_vehicle(year, make, model, row_location, yard, date_found):
         VALUES (?, ?, ?, ?, ?, ?)
     """, (year, make, model, row_location, yard, date_found))
 
+    is_new = cursor.rowcount > 0
+
     conn.commit()
     conn.close()
+
+    return is_new

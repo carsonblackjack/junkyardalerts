@@ -6,8 +6,8 @@
 - [x] Install Git
 - [x] Build first scraper
 - [x] Create SQLite database
-- [ ] Save scraper results to database
-- [ ] Verify duplicate detection
+- [x] Save scraper results to database
+- [x] Verify duplicate detection
 
 ## Sprint 2 - Inventory Engine
 - [ ] Scrape every make
