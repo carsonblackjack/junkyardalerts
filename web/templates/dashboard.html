@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Welcome, {{ email }}</h2>
+<p>Your watchlist will show up here soon.</p>
+<a href="{{ url_for('routes.logout') }}">Log Out</a>
+{% endblock %}

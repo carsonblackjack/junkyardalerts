@@ -23,7 +23,7 @@
 - [ ] SMS alerts
 
 ## Sprint 4 - Web App
-- [ ] User accounts
+- [x] User accounts
 - [ ] Watchlists
 - [ ] Dashboard
 - [ ] Admin panel
