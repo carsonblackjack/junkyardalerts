@@ -4,12 +4,15 @@ from datetime import date
 
 from database.database import get_inventory_counts_by_yard, initialize_database, save_vehicle
 from notifications.notifier import send_email
-from scraper.jalopy import ALL_MAKES as JALOPY_MAKES, JalopyScraper
+from scraper.jalopy import ALL_MAKES as JALOPY_MAKES, YARD_LOCATIONS as JALOPY_LOCATIONS, JalopyScraper
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES, TrustyPapScraper
 
 # Each yard we check: its name, its scraper, and the list of makes to search.
+# Jalopy Jungle has 5 physical locations, so that's one entry per location.
 YARDS = [
-    {"name": "Jalopy Jungle", "scraper": JalopyScraper(), "makes": JALOPY_MAKES},
+    {"name": f"Jalopy Jungle {location}", "scraper": JalopyScraper(yard_id), "makes": JALOPY_MAKES}
+    for location, yard_id in JALOPY_LOCATIONS.items()
+] + [
     {"name": "Trusty Pick-A-Part", "scraper": TrustyPapScraper(), "makes": TRUSTY_MAKES},
 ]
 
@@ -47,7 +50,7 @@ for yard in YARDS:
                 new_count += 1
                 new_vehicles.append(
                     f"{vehicle['year']} {vehicle['make']} {vehicle['model']} "
-                    f"- Row {vehicle['row']} - {yard['name']}"
+                    f"- Yard: {yard['name']} - Row: {vehicle['row']}"
                 )
                 print(
                     f"  [NEW] {vehicle['year']} {vehicle['make']} "

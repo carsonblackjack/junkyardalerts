@@ -16,12 +16,25 @@ ALL_MAKES = [
 ]
 
 
+# Jalopy Jungle has multiple physical locations; each needs its own YardId.
+YARD_LOCATIONS = {
+    "Boise": "1020",
+    "Caldwell": "1021",
+    "Garden City": "1119",
+    "Nampa": "1022",
+    "Twin Falls": "1099",
+}
+
+
 class JalopyScraper:
     URL = "https://inventory.pickapartjalopyjungle.com/"
 
+    def __init__(self, yard_id):
+        self.yard_id = yard_id
+
     def search(self, make, model=""):
         payload = {
-            "YardId": "1020",
+            "YardId": self.yard_id,
             "VehicleMake": make,
             "VehicleModel": model
         }
