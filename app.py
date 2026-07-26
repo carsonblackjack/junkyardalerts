@@ -48,10 +48,13 @@ for yard in YARDS:
 
             if is_new:
                 new_count += 1
-                new_vehicles.append(
-                    f"{vehicle['year']} {vehicle['make']} {vehicle['model']} "
-                    f"- Yard: {yard['name']} - Row: {vehicle['row']}"
-                )
+                new_vehicles.append({
+                    "year": vehicle["year"],
+                    "make": vehicle["make"],
+                    "model": vehicle["model"],
+                    "row": vehicle["row"],
+                    "yard": yard["name"],
+                })
                 print(
                     f"  [NEW] {vehicle['year']} {vehicle['make']} "
                     f"{vehicle['model']} - Row {vehicle['row']}"
@@ -62,8 +65,13 @@ for yard in YARDS:
 print(f"\nDone. Checked {total_count} vehicles, found {new_count} new.")
 
 if new_vehicles:
+    new_vehicles.sort(key=lambda v: (v["make"], v["model"], v["year"]))
+    lines = [
+        f"{v['year']} {v['make']} {v['model']} - Yard: {v['yard']} - Row: {v['row']}"
+        for v in new_vehicles
+    ]
     subject = f"YardWatch: {new_count} new vehicle(s) found"
-    body = "\n".join(new_vehicles)
+    body = "\n".join(lines)
     send_email(subject, body)
     print("Sent email alert.")
 
