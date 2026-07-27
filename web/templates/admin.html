@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Admin Panel</h2>
+
+<h3>System Overview</h3>
+<p>Tracking <strong>{{ total_vehicles }}</strong> vehicles across {{ counts_by_yard|length }} yards.</p>
+<ul class="yard-counts">
+    {% for yard, count in counts_by_yard %}
+        <li>{{ yard }}: {{ count }}</li>
+    {% endfor %}
+</ul>
+
+<h3>Users ({{ users|length }})</h3>
+{% if users %}
+    <table>
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Joined</th>
+                <th>Watchlist Items</th>
+                <th>Admin</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user_id, email, created_at, is_admin, watchlist_count in users %}
+                <tr>
+                    <td>{{ email }}</td>
+                    <td>{{ created_at }}</td>
+                    <td>{{ watchlist_count }}</td>
+                    <td>{{ "Yes" if is_admin else "No" }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No users yet.</p>
+{% endif %}
+
+<a href="{{ url_for('routes.dashboard') }}">Back to Dashboard</a>
+{% endblock %}

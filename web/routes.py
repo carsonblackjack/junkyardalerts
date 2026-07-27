@@ -7,6 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from database.database import (
     add_watchlist_item,
     create_user,
+    get_all_users,
     get_distinct_models_for_make,
     get_inventory_counts_by_yard,
     get_matching_vehicles,
@@ -30,6 +31,19 @@ def login_required(view):
     def wrapped(*args, **kwargs):
         if "user_id" not in session:
             return redirect(url_for("routes.login"))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def admin_required(view):
+    """Redirect non-admins back to the dashboard."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("routes.login"))
+        if not session.get("is_admin"):
+            flash("You don't have access to that page.")
+            return redirect(url_for("routes.dashboard"))
         return view(*args, **kwargs)
     return wrapped
 
@@ -78,6 +92,7 @@ def login():
 
         session["user_id"] = user[0]
         session["user_email"] = user[1]
+        session["is_admin"] = bool(user[4])
         return redirect(url_for("routes.dashboard"))
 
     return render_template("login.html")
@@ -107,6 +122,21 @@ def dashboard():
         counts_by_yard=counts_by_yard,
         total_vehicles=total_vehicles,
         recent_vehicles=recent_vehicles,
+        is_admin=session.get("is_admin", False),
+    )
+
+
+@routes.route("/admin")
+@admin_required
+def admin():
+    users = get_all_users()
+    counts_by_yard = get_inventory_counts_by_yard()
+    total_vehicles = sum(count for _, count in counts_by_yard)
+    return render_template(
+        "admin.html",
+        users=users,
+        counts_by_yard=counts_by_yard,
+        total_vehicles=total_vehicles,
     )
 
 

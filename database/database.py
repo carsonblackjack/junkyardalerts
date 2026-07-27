@@ -29,9 +29,15 @@ def initialize_database():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
-            created_at TEXT
+            created_at TEXT,
+            is_admin INTEGER NOT NULL DEFAULT 0
         )
     """)
+
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass  # already has the column
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS watchlist (
@@ -94,17 +100,37 @@ def create_user(email, password_hash, created_at):
 
 
 def get_user_by_email(email):
-    """Return (id, email, password_hash, created_at) for this email, or
-    None if no user has that email."""
+    """Return (id, email, password_hash, created_at, is_admin) for this
+    email, or None if no user has that email."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT id, email, password_hash, created_at FROM users WHERE email = ?", (email,))
+    cursor.execute("SELECT id, email, password_hash, created_at, is_admin FROM users WHERE email = ?", (email,))
     user = cursor.fetchone()
 
     conn.close()
 
     return user
+
+
+def get_all_users():
+    """Return every registered user for the admin panel:
+    (id, email, created_at, is_admin, watchlist_item_count)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT u.id, u.email, u.created_at, u.is_admin, COUNT(w.id)
+        FROM users u
+        LEFT JOIN watchlist w ON w.user_id = u.id
+        GROUP BY u.id
+        ORDER BY u.created_at
+    """)
+    users = cursor.fetchall()
+
+    conn.close()
+
+    return users
 
 
 def add_watchlist_item(user_id, make, model, created_at):

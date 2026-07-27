@@ -26,7 +26,7 @@
 - [x] User accounts
 - [x] Watchlists
 - [x] Dashboard
-- [ ] Admin panel
+- [x] Admin panel
 
 ## Future Ideas
 - [ ] Multiple junkyards
