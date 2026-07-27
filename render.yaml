@@ -1,0 +1,62 @@
+databases:
+  - name: yardwatch-db
+    plan: free
+
+services:
+  - type: web
+    name: yardwatch-web
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run_web:app
+    envVars:
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: ALERT_EMAIL_FROM
+        sync: false
+      - key: ALERT_EMAIL_TO
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: yardwatch-db
+          property: connectionString
+
+  - type: cron
+    name: yardwatch-scrape
+    runtime: python
+    plan: starter
+    schedule: "0 2,14,20 * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: ALERT_EMAIL_FROM
+        sync: false
+      - key: ALERT_EMAIL_TO
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: yardwatch-db
+          property: connectionString
+
+  - type: cron
+    name: yardwatch-scrape-summary
+    runtime: python
+    plan: starter
+    schedule: "0 8 * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py --summary
+    envVars:
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: ALERT_EMAIL_FROM
+        sync: false
+      - key: ALERT_EMAIL_TO
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: yardwatch-db
+          property: connectionString
