@@ -8,7 +8,9 @@ from database.database import (
     add_watchlist_item,
     create_user,
     get_distinct_models_for_make,
+    get_inventory_counts_by_yard,
     get_matching_vehicles,
+    get_recent_vehicles,
     get_user_by_email,
     get_watchlist,
     remove_watchlist_item,
@@ -93,12 +95,18 @@ def dashboard():
     user_id = session["user_id"]
     watchlist = get_watchlist(user_id)
     matches = get_matching_vehicles(user_id)
+    counts_by_yard = get_inventory_counts_by_yard()
+    total_vehicles = sum(count for _, count in counts_by_yard)
+    recent_vehicles = get_recent_vehicles(20)
     return render_template(
         "dashboard.html",
         email=session.get("user_email"),
         watchlist=watchlist,
         matches=matches,
         makes=ALL_MAKES,
+        counts_by_yard=counts_by_yard,
+        total_vehicles=total_vehicles,
+        recent_vehicles=recent_vehicles,
     )
 
 

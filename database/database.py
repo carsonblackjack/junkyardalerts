@@ -190,6 +190,24 @@ def get_distinct_models_for_make(make):
     return models
 
 
+def get_recent_vehicles(limit=20):
+    """Return the most recently found vehicles across every yard, newest first."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT year, make, model, row_location, yard, date_found
+        FROM vehicles
+        ORDER BY id DESC
+        LIMIT ?
+    """, (limit,))
+    vehicles = cursor.fetchall()
+
+    conn.close()
+
+    return vehicles
+
+
 def get_inventory_counts_by_yard():
     """Return [(yard, vehicle_count), ...] for everything currently saved."""
     conn = get_connection()

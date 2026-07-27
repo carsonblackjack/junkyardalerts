@@ -2,6 +2,44 @@
 {% block content %}
 <h2>Welcome, {{ email }}</h2>
 
+<h3>Inventory Overview</h3>
+<p>Tracking <strong>{{ total_vehicles }}</strong> vehicles across {{ counts_by_yard|length }} yards.</p>
+<ul class="yard-counts">
+    {% for yard, count in counts_by_yard %}
+        <li>{{ yard }}: {{ count }}</li>
+    {% endfor %}
+</ul>
+
+<h3>Recently Found</h3>
+{% if recent_vehicles %}
+    <table>
+        <thead>
+            <tr>
+                <th>Year</th>
+                <th>Make</th>
+                <th>Model</th>
+                <th>Row</th>
+                <th>Yard</th>
+                <th>Found</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for year, make, model, row_location, yard, date_found in recent_vehicles %}
+                <tr>
+                    <td>{{ year }}</td>
+                    <td>{{ make }}</td>
+                    <td>{{ model }}</td>
+                    <td>{{ row_location }}</td>
+                    <td>{{ yard }}</td>
+                    <td>{{ date_found }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>Nothing found yet.</p>
+{% endif %}
+
 <h3>Your Watchlist</h3>
 <form method="post" action="{{ url_for('routes.watchlist_add') }}">
     <label>Make

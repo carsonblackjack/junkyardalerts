@@ -25,7 +25,7 @@
 ## Sprint 4 - Web App
 - [x] User accounts
 - [x] Watchlists
-- [ ] Dashboard
+- [x] Dashboard
 - [ ] Admin panel
 
 ## Future Ideas
