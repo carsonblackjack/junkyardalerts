@@ -31,7 +31,7 @@
                     <td>{{ model }}</td>
                     <td>{{ row_location }}</td>
                     <td>{{ yard }}</td>
-                    <td>{{ date_found }}</td>
+                    <td>{{ date_found|us_date }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -74,31 +74,38 @@
 {% endif %}
 
 <h3>Matches Found</h3>
-{% if matches %}
-    <table>
-        <thead>
-            <tr>
-                <th>Year</th>
-                <th>Make</th>
-                <th>Model</th>
-                <th>Row</th>
-                <th>Yard</th>
-                <th>Found</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for year, make, model, row_location, yard, date_found in matches %}
-                <tr>
-                    <td>{{ year }}</td>
-                    <td>{{ make }}</td>
-                    <td>{{ model }}</td>
-                    <td>{{ row_location }}</td>
-                    <td>{{ yard }}</td>
-                    <td>{{ date_found }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+{% if match_groups %}
+    {% for group_make, group_model, matches in match_groups %}
+        <h4>{{ group_make }}{% if group_model %} - {{ group_model }}{% else %} (any model){% endif %}</h4>
+        {% if matches %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Make</th>
+                        <th>Model</th>
+                        <th>Row</th>
+                        <th>Yard</th>
+                        <th>Found</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for year, make, model, row_location, yard, date_found in matches %}
+                        <tr>
+                            <td>{{ year }}</td>
+                            <td>{{ make }}</td>
+                            <td>{{ model }}</td>
+                            <td>{{ row_location }}</td>
+                            <td>{{ yard }}</td>
+                            <td>{{ date_found|us_date }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No matches yet for this one.</p>
+        {% endif %}
+    {% endfor %}
 {% else %}
     <p>No matches yet. Once a watched car shows up in inventory, it'll appear here.</p>
 {% endif %}

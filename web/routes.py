@@ -10,7 +10,7 @@ from database.database import (
     get_all_users,
     get_distinct_models_for_make,
     get_inventory_counts_by_yard,
-    get_matching_vehicles,
+    get_matches_grouped,
     get_recent_vehicles,
     get_user_by_email,
     get_watchlist,
@@ -90,6 +90,7 @@ def login():
             flash("Incorrect email or password.")
             return render_template("login.html")
 
+        session.permanent = True
         session["user_id"] = user[0]
         session["user_email"] = user[1]
         session["is_admin"] = bool(user[4])
@@ -109,7 +110,7 @@ def logout():
 def dashboard():
     user_id = session["user_id"]
     watchlist = get_watchlist(user_id)
-    matches = get_matching_vehicles(user_id)
+    match_groups = get_matches_grouped(user_id)
     counts_by_yard = get_inventory_counts_by_yard()
     total_vehicles = sum(count for _, count in counts_by_yard)
     recent_vehicles = get_recent_vehicles(20)
@@ -117,7 +118,7 @@ def dashboard():
         "dashboard.html",
         email=session.get("user_email"),
         watchlist=watchlist,
-        matches=matches,
+        match_groups=match_groups,
         makes=ALL_MAKES,
         counts_by_yard=counts_by_yard,
         total_vehicles=total_vehicles,

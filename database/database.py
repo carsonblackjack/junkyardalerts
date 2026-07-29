@@ -218,26 +218,31 @@ def get_watchlist(user_id):
     return items
 
 
-def get_matching_vehicles(user_id):
-    """Return every vehicle in inventory that matches this user's
-    watchlist (make always, model only if they specified one)."""
+def get_matches_grouped(user_id):
+    """Return [(make, model, [matching_vehicle_rows]), ...] - one group per
+    watchlist item, so matches for different makes/models don't get mixed
+    together in one list."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(_q("""
-        SELECT DISTINCT v.year, v.make, v.model, v.row_location, v.yard, v.date_found
-        FROM watchlist w
-        JOIN vehicles v
-            ON UPPER(v.make) = UPPER(w.make)
-            AND (w.model = '' OR UPPER(v.model) = UPPER(w.model))
-        WHERE w.user_id = ?
-        ORDER BY v.date_found DESC
-    """), (user_id,))
-    vehicles = cursor.fetchall()
+    cursor.execute(_q("SELECT make, model FROM watchlist WHERE user_id = ? ORDER BY make, model"), (user_id,))
+    items = cursor.fetchall()
+
+    groups = []
+    for make, model in items:
+        cursor.execute(_q("""
+            SELECT DISTINCT year, make, model, row_location, yard, date_found
+            FROM vehicles
+            WHERE UPPER(make) = UPPER(?)
+            AND (? = '' OR UPPER(model) = UPPER(?))
+            ORDER BY date_found DESC
+        """), (make, model, model))
+        matches = cursor.fetchall()
+        groups.append((make, model, matches))
 
     conn.close()
 
-    return vehicles
+    return groups
 
 
 def get_distinct_models_for_make(make):

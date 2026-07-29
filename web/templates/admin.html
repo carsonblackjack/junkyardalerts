@@ -25,7 +25,7 @@
             {% for user_id, email, created_at, is_admin, watchlist_count in users %}
                 <tr>
                     <td>{{ email }}</td>
-                    <td>{{ created_at }}</td>
+                    <td>{{ created_at|us_date }}</td>
                     <td>{{ watchlist_count }}</td>
                     <td>{{ "Yes" if is_admin else "No" }}</td>
                 </tr>

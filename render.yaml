@@ -27,7 +27,10 @@ services:
     name: yardwatch-scrape
     runtime: python
     plan: starter
-    schedule: "0 2,14,20 * * *"
+    # Render's cron schedule runs in UTC. These times (8am, 8pm, 2am UTC)
+    # land on 2am, 2pm, 8pm Mountain Time (UTC-6, MDT). If this drifts an
+    # hour when daylight saving changes (Nov/March), shift each by 1 hour.
+    schedule: "0 2,8,20 * * *"
     buildCommand: pip install -r requirements.txt
     startCommand: python app.py
     envVars:
@@ -46,7 +49,8 @@ services:
     name: yardwatch-scrape-summary
     runtime: python
     plan: starter
-    schedule: "0 8 * * *"
+    # 2pm UTC = 8am Mountain Time (UTC-6, MDT). See note above about DST.
+    schedule: "0 14 * * *"
     buildCommand: pip install -r requirements.txt
     startCommand: python app.py --summary
     envVars:
