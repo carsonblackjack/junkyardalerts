@@ -9,6 +9,8 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn run_web:app
+    domains:
+      - yard-watch.com
     envVars:
       - key: FLASK_SECRET_KEY
         generateValue: true
