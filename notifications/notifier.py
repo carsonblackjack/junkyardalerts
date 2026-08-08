@@ -10,6 +10,7 @@ ALERT_EMAIL_FROM = os.getenv("ALERT_EMAIL_FROM")
 ALERT_EMAIL_TO = os.getenv("ALERT_EMAIL_TO")
 
 SENDGRID_URL = "https://api.sendgrid.com/v3/mail/send"
+WEBSITE_URL = "https://yard-watch.com"
 
 
 def send_email(subject, body):
@@ -20,11 +21,16 @@ def send_email(subject, body):
         print("Email not sent: SENDGRID_API_KEY, ALERT_EMAIL_FROM, or ALERT_EMAIL_TO is missing from .env")
         return
 
+    full_body = f"{body}\n\n---\nCheck it out: {WEBSITE_URL}"
+
     payload = {
         "personalizations": [{"to": [{"email": ALERT_EMAIL_TO}]}],
         "from": {"email": ALERT_EMAIL_FROM},
         "subject": subject,
-        "content": [{"type": "text/plain", "value": body}]
+        "content": [{"type": "text/plain", "value": full_body}],
+        # Otherwise SendGrid rewrites every link into a long tracking
+        # redirect URL instead of leaving it as a plain, readable link.
+        "tracking_settings": {"click_tracking": {"enable": False}}
     }
 
     headers = {
