@@ -18,6 +18,7 @@ from database.database import (
 )
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES
+from web.turnstile import TURNSTILE_SITE_KEY, verify_turnstile
 
 routes = Blueprint("routes", __name__)
 
@@ -58,29 +59,37 @@ def index():
 @routes.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        if not verify_turnstile(request.form.get("cf-turnstile-response"), request.remote_addr):
+            flash("Please complete the security check and try again.")
+            return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
+
         email = request.form["email"].strip().lower()
         password = request.form["password"]
 
         if not email or not password:
             flash("Email and password are required.")
-            return render_template("register.html")
+            return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
         password_hash = generate_password_hash(password)
         created = create_user(email, password_hash, datetime.now(timezone.utc).isoformat())
 
         if not created:
             flash("An account with that email already exists.")
-            return render_template("register.html")
+            return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
         flash("Account created! Please log in.")
         return redirect(url_for("routes.login"))
 
-    return render_template("register.html")
+    return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
 
 @routes.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        if not verify_turnstile(request.form.get("cf-turnstile-response"), request.remote_addr):
+            flash("Please complete the security check and try again.")
+            return render_template("login.html", turnstile_site_key=TURNSTILE_SITE_KEY)
+
         email = request.form["email"].strip().lower()
         password = request.form["password"]
 
@@ -88,7 +97,7 @@ def login():
 
         if user is None or not check_password_hash(user[2], password):
             flash("Incorrect email or password.")
-            return render_template("login.html")
+            return render_template("login.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
         session.permanent = True
         session["user_id"] = user[0]
@@ -96,7 +105,7 @@ def login():
         session["is_admin"] = bool(user[4])
         return redirect(url_for("routes.dashboard"))
 
-    return render_template("login.html")
+    return render_template("login.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
 
 @routes.route("/logout")
