@@ -283,18 +283,12 @@ def get_distinct_models_for_make(make):
     return models
 
 
-def get_distinct_years_for_make(make, model=""):
-    """Return every year we've actually seen in inventory for this make
-    (and model, if given), sorted."""
+def get_distinct_years():
+    """Return every year we've seen across all inventory, sorted."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(_q("""
-        SELECT DISTINCT year FROM vehicles
-        WHERE UPPER(make) = UPPER(?)
-        AND (? = '' OR UPPER(model) = UPPER(?))
-        ORDER BY year
-    """), (make, model, model))
+    cursor.execute("SELECT DISTINCT year FROM vehicles ORDER BY year")
     years = [row[0] for row in cursor.fetchall()]
 
     conn.close()
@@ -313,6 +307,32 @@ def get_recent_vehicles(limit=20):
         ORDER BY id DESC
         LIMIT ?
     """), (limit,))
+    vehicles = cursor.fetchall()
+
+    conn.close()
+
+    return vehicles
+
+
+def search_vehicles(query, limit=100):
+    """Return vehicles where the search term appears in year, make,
+    model, row, or yard - newest first."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    like_term = f"%{query}%"
+
+    cursor.execute(_q("""
+        SELECT year, make, model, row_location, yard, date_found
+        FROM vehicles
+        WHERE UPPER(year) LIKE UPPER(?)
+           OR UPPER(make) LIKE UPPER(?)
+           OR UPPER(model) LIKE UPPER(?)
+           OR UPPER(row_location) LIKE UPPER(?)
+           OR UPPER(yard) LIKE UPPER(?)
+        ORDER BY date_found DESC
+        LIMIT ?
+    """), (like_term, like_term, like_term, like_term, like_term, limit))
     vehicles = cursor.fetchall()
 
     conn.close()

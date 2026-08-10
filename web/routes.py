@@ -9,13 +9,14 @@ from database.database import (
     create_user,
     get_all_users,
     get_distinct_models_for_make,
-    get_distinct_years_for_make,
+    get_distinct_years,
     get_inventory_counts_by_yard,
     get_matches_grouped,
     get_recent_vehicles,
     get_user_by_email,
     get_watchlist,
     remove_watchlist_item,
+    search_vehicles,
 )
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES
@@ -124,16 +125,23 @@ def dashboard():
     counts_by_yard = get_inventory_counts_by_yard()
     total_vehicles = sum(count for _, count in counts_by_yard)
     recent_vehicles = get_recent_vehicles(20)
+
+    search_query = request.args.get("q", "").strip()
+    search_results = search_vehicles(search_query) if search_query else None
+
     return render_template(
         "dashboard.html",
         email=session.get("user_email"),
         watchlist=watchlist,
         match_groups=match_groups,
         makes=ALL_MAKES,
+        years=get_distinct_years(),
         counts_by_yard=counts_by_yard,
         total_vehicles=total_vehicles,
         recent_vehicles=recent_vehicles,
         is_admin=session.get("is_admin", False),
+        search_query=search_query,
+        search_results=search_results,
     )
 
 
@@ -157,15 +165,6 @@ def api_models(make):
     """Models we've seen in inventory for this make, used to fill in the
     model dropdown after a make is picked."""
     return jsonify(get_distinct_models_for_make(make))
-
-
-@routes.route("/api/years/<make>")
-@login_required
-def api_years(make):
-    """Years we've seen in inventory for this make (and model, if given),
-    used to fill in the Year From/Year To dropdowns."""
-    model = request.args.get("model", "")
-    return jsonify(get_distinct_years_for_make(make, model))
 
 
 @routes.route("/watchlist/add", methods=["POST"])

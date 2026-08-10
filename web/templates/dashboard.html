@@ -2,6 +2,46 @@
 {% block content %}
 <h2>Welcome, {{ email }}</h2>
 
+<h3>Search Inventory</h3>
+<form method="get" action="{{ url_for('routes.dashboard') }}">
+    <label>Search
+        <input type="text" name="q" value="{{ search_query }}" placeholder="Year, make, model, row, or yard">
+    </label>
+    <button type="submit">Search</button>
+</form>
+
+{% if search_results is not none %}
+    <h4>Results for "{{ search_query }}"</h4>
+    {% if search_results %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Year</th>
+                    <th>Make</th>
+                    <th>Model</th>
+                    <th>Row</th>
+                    <th>Yard</th>
+                    <th>Found</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for year, make, model, row_location, yard, date_found in search_results %}
+                    <tr>
+                        <td>{{ year }}</td>
+                        <td>{{ make }}</td>
+                        <td>{{ model }}</td>
+                        <td>{{ row_location }}</td>
+                        <td>{{ yard }}</td>
+                        <td>{{ date_found|us_date }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No vehicles matched that search.</p>
+    {% endif %}
+{% endif %}
+
 <h3>Inventory Overview</h3>
 <p>Tracking <strong>{{ total_vehicles }}</strong> vehicles across {{ counts_by_yard|length }} yards.</p>
 <ul class="yard-counts">
@@ -42,6 +82,22 @@
 
 <h3>Your Watchlist</h3>
 <form method="post" action="{{ url_for('routes.watchlist_add') }}">
+    <label>Year From (optional)
+        <select name="year_from">
+            <option value="">No limit</option>
+            {% for year in years %}
+                <option value="{{ year }}">{{ year }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Year To (optional)
+        <select name="year_to">
+            <option value="">No limit</option>
+            {% for year in years %}
+                <option value="{{ year }}">{{ year }}</option>
+            {% endfor %}
+        </select>
+    </label>
     <label>Make
         <select name="make" id="make-select" required>
             <option value="">Select Make</option>
@@ -53,16 +109,6 @@
     <label>Model (optional)
         <select name="model" id="model-select">
             <option value="">Any model</option>
-        </select>
-    </label>
-    <label>Year From (optional)
-        <select name="year_from" id="year-from-select">
-            <option value="">No limit</option>
-        </select>
-    </label>
-    <label>Year To (optional)
-        <select name="year_to" id="year-to-select">
-            <option value="">No limit</option>
         </select>
     </label>
     <button type="submit">Add to Watchlist</button>
