@@ -66,10 +66,10 @@
                     <td>
                         <input type="checkbox" class="spotted-checkbox" data-vehicle-id="{{ vehicle_id }}" {% if is_spotted %}checked{% endif %}>
                     </td>
-                    <td>{{ year }}</td>
+                    <td class="mono">{{ year }}</td>
                     <td>{{ make }}</td>
                     <td>{{ model }}</td>
-                    <td>{{ row_location }}</td>
+                    <td class="mono">{{ row_location }}</td>
                     <td>{{ yard }}</td>
                     <td>{{ date_found|us_date }}</td>
                 </tr>

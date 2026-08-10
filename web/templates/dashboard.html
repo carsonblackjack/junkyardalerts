@@ -27,10 +27,10 @@
             <tbody>
                 {% for year, make, model, row_location, yard, date_found in search_results %}
                     <tr>
-                        <td>{{ year }}</td>
+                        <td class="mono">{{ year }}</td>
                         <td>{{ make }}</td>
                         <td>{{ model }}</td>
-                        <td>{{ row_location }}</td>
+                        <td class="mono">{{ row_location }}</td>
                         <td>{{ yard }}</td>
                         <td>{{ date_found|us_date }}</td>
                     </tr>
@@ -66,10 +66,10 @@
         <tbody>
             {% for year, make, model, row_location, yard, date_found in recent_vehicles %}
                 <tr>
-                    <td>{{ year }}</td>
+                    <td class="mono">{{ year }}</td>
                     <td>{{ make }}</td>
                     <td>{{ model }}</td>
-                    <td>{{ row_location }}</td>
+                    <td class="mono">{{ row_location }}</td>
                     <td>{{ yard }}</td>
                     <td>{{ date_found|us_date }}</td>
                 </tr>
@@ -148,10 +148,10 @@
                 <tbody>
                     {% for year, make, model, row_location, yard, date_found in matches %}
                         <tr>
-                            <td>{{ year }}</td>
+                            <td class="mono">{{ year }}</td>
                             <td>{{ make }}</td>
                             <td>{{ model }}</td>
-                            <td>{{ row_location }}</td>
+                            <td class="mono">{{ row_location }}</td>
                             <td>{{ yard }}</td>
                             <td>{{ date_found|us_date }}</td>
                         </tr>

@@ -2,12 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>YardWatch</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <div class="hazard-rule"></div>
     <header>
-        <h1>🚗 YardWatch</h1>
+        <a href="{{ url_for('routes.dashboard') }}" class="mark-link">
+            <svg class="mark-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M2 2 L52 2 L62 12 L62 62 L2 62 Z" stroke="currentColor" stroke-width="3" fill="none"/>
+                <path d="M10 40 C10 34 15 30 22 30 L42 30 C49 30 54 34 54 40 L54 46 L10 46 Z" fill="var(--accent)"/>
+                <circle cx="20" cy="46" r="5.5" fill="var(--gunmetal)" stroke="var(--surface)" stroke-width="2"/>
+                <circle cx="44" cy="46" r="5.5" fill="var(--gunmetal)" stroke="var(--surface)" stroke-width="2"/>
+                <path d="M16 30 L20 20 L38 20 L42 30" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+            </svg>
+            <h1>YARD<span class="accent-w">WATCH</span></h1>
+        </a>
     </header>
     <main>
         {% with messages = get_flashed_messages() %}
