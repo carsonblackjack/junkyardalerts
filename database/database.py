@@ -72,11 +72,23 @@ def initialize_database():
             user_id INTEGER NOT NULL,
             make TEXT NOT NULL,
             model TEXT NOT NULL DEFAULT '',
+            year_from TEXT NOT NULL DEFAULT '',
+            year_to TEXT NOT NULL DEFAULT '',
             created_at TEXT,
             UNIQUE(user_id, make, model),
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     """)
+
+    if USING_POSTGRES:
+        cursor.execute("ALTER TABLE watchlist ADD COLUMN IF NOT EXISTS year_from TEXT NOT NULL DEFAULT ''")
+        cursor.execute("ALTER TABLE watchlist ADD COLUMN IF NOT EXISTS year_to TEXT NOT NULL DEFAULT ''")
+    else:
+        for column in ("year_from", "year_to"):
+            try:
+                cursor.execute(f"ALTER TABLE watchlist ADD COLUMN {column} TEXT NOT NULL DEFAULT ''")
+            except sqlite3.OperationalError:
+                pass  # already has the column
 
     conn.commit()
     conn.close()
@@ -171,18 +183,20 @@ def get_all_users():
     return users
 
 
-def add_watchlist_item(user_id, make, model, created_at):
-    """Add a make (and optionally a model) to a user's watchlist. Leaving
-    model blank watches every model of that make. Returns True if added,
-    False if that make/model was already on their watchlist."""
+def add_watchlist_item(user_id, make, model, created_at, year_from="", year_to=""):
+    """Add a make (and optionally a model and year range) to a user's
+    watchlist. Leaving model blank watches every model of that make;
+    leaving year_from/year_to blank means no limit on that end of the
+    range. Returns True if added, False if that make/model was already
+    on their watchlist."""
     conn = get_connection()
     cursor = conn.cursor()
 
     try:
         cursor.execute(_q("""
-            INSERT INTO watchlist (user_id, make, model, created_at)
-            VALUES (?, ?, ?, ?)
-        """), (user_id, make, model, created_at))
+            INSERT INTO watchlist (user_id, make, model, year_from, year_to, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """), (user_id, make, model, year_from, year_to, created_at))
         conn.commit()
         added = True
     except IntegrityError:
@@ -206,11 +220,15 @@ def remove_watchlist_item(watchlist_id, user_id):
 
 
 def get_watchlist(user_id):
-    """Return [(id, make, model), ...] for everything this user is watching."""
+    """Return [(id, make, model, year_from, year_to), ...] for everything
+    this user is watching."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(_q("SELECT id, make, model FROM watchlist WHERE user_id = ? ORDER BY make, model"), (user_id,))
+    cursor.execute(_q("""
+        SELECT id, make, model, year_from, year_to FROM watchlist
+        WHERE user_id = ? ORDER BY make, model
+    """), (user_id,))
     items = cursor.fetchall()
 
     conn.close()
@@ -219,26 +237,31 @@ def get_watchlist(user_id):
 
 
 def get_matches_grouped(user_id):
-    """Return [(make, model, [matching_vehicle_rows]), ...] - one group per
-    watchlist item, so matches for different makes/models don't get mixed
-    together in one list."""
+    """Return [(make, model, year_from, year_to, [matching_vehicle_rows]), ...]
+    - one group per watchlist item, so matches for different makes/models
+    don't get mixed together in one list."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(_q("SELECT make, model FROM watchlist WHERE user_id = ? ORDER BY make, model"), (user_id,))
+    cursor.execute(_q("""
+        SELECT make, model, year_from, year_to FROM watchlist
+        WHERE user_id = ? ORDER BY make, model
+    """), (user_id,))
     items = cursor.fetchall()
 
     groups = []
-    for make, model in items:
+    for make, model, year_from, year_to in items:
         cursor.execute(_q("""
             SELECT DISTINCT year, make, model, row_location, yard, date_found
             FROM vehicles
             WHERE UPPER(make) = UPPER(?)
             AND (? = '' OR UPPER(model) = UPPER(?))
+            AND (? = '' OR year >= ?)
+            AND (? = '' OR year <= ?)
             ORDER BY date_found DESC
-        """), (make, model, model))
+        """), (make, model, model, year_from, year_from, year_to, year_to))
         matches = cursor.fetchall()
-        groups.append((make, model, matches))
+        groups.append((make, model, year_from, year_to, matches))
 
     conn.close()
 
@@ -258,6 +281,25 @@ def get_distinct_models_for_make(make):
     conn.close()
 
     return models
+
+
+def get_distinct_years_for_make(make, model=""):
+    """Return every year we've actually seen in inventory for this make
+    (and model, if given), sorted."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("""
+        SELECT DISTINCT year FROM vehicles
+        WHERE UPPER(make) = UPPER(?)
+        AND (? = '' OR UPPER(model) = UPPER(?))
+        ORDER BY year
+    """), (make, model, model))
+    years = [row[0] for row in cursor.fetchall()]
+
+    conn.close()
+
+    return years
 
 
 def get_recent_vehicles(limit=20):

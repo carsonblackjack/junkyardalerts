@@ -9,6 +9,7 @@ from database.database import (
     create_user,
     get_all_users,
     get_distinct_models_for_make,
+    get_distinct_years_for_make,
     get_inventory_counts_by_yard,
     get_matches_grouped,
     get_recent_vehicles,
@@ -158,17 +159,34 @@ def api_models(make):
     return jsonify(get_distinct_models_for_make(make))
 
 
+@routes.route("/api/years/<make>")
+@login_required
+def api_years(make):
+    """Years we've seen in inventory for this make (and model, if given),
+    used to fill in the Year From/Year To dropdowns."""
+    model = request.args.get("model", "")
+    return jsonify(get_distinct_years_for_make(make, model))
+
+
 @routes.route("/watchlist/add", methods=["POST"])
 @login_required
 def watchlist_add():
     make = request.form["make"].strip().upper()
     model = request.form.get("model", "").strip().upper()
+    year_from = request.form.get("year_from", "").strip()
+    year_to = request.form.get("year_to", "").strip()
 
     if not make:
         flash("Make is required.")
         return redirect(url_for("routes.dashboard"))
 
-    added = add_watchlist_item(session["user_id"], make, model, datetime.now(timezone.utc).isoformat())
+    if year_from and year_to and year_from > year_to:
+        flash("Year From can't be after Year To.")
+        return redirect(url_for("routes.dashboard"))
+
+    added = add_watchlist_item(
+        session["user_id"], make, model, datetime.now(timezone.utc).isoformat(), year_from, year_to
+    )
 
     if not added:
         flash("That's already on your watchlist.")

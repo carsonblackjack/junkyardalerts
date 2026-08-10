@@ -55,14 +55,24 @@
             <option value="">Any model</option>
         </select>
     </label>
+    <label>Year From (optional)
+        <select name="year_from" id="year-from-select">
+            <option value="">No limit</option>
+        </select>
+    </label>
+    <label>Year To (optional)
+        <select name="year_to" id="year-to-select">
+            <option value="">No limit</option>
+        </select>
+    </label>
     <button type="submit">Add to Watchlist</button>
 </form>
 
 {% if watchlist %}
     <ul>
-        {% for item_id, make, model in watchlist %}
+        {% for item_id, make, model, year_from, year_to in watchlist %}
             <li>
-                {{ make }}{% if model %} - {{ model }}{% else %} (any model){% endif %}
+                {% if year_from or year_to %}{{ year_from or "any" }}-{{ year_to or "any" }} {% endif %}{{ make }}{% if model %} - {{ model }}{% else %} (any model){% endif %}
                 <form method="post" action="{{ url_for('routes.watchlist_remove', item_id=item_id) }}" style="display: inline;">
                     <button type="submit">Remove</button>
                 </form>
@@ -75,8 +85,8 @@
 
 <h3>Matches Found</h3>
 {% if match_groups %}
-    {% for group_make, group_model, matches in match_groups %}
-        <h4>{{ group_make }}{% if group_model %} - {{ group_model }}{% else %} (any model){% endif %}</h4>
+    {% for group_make, group_model, group_year_from, group_year_to, matches in match_groups %}
+        <h4>{% if group_year_from or group_year_to %}{{ group_year_from or "any" }}-{{ group_year_to or "any" }} {% endif %}{{ group_make }}{% if group_model %} - {{ group_model }}{% else %} (any model){% endif %}</h4>
         {% if matches %}
             <table>
                 <thead>
