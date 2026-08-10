@@ -83,7 +83,7 @@
 <h3>Your Watchlist</h3>
 <form method="post" action="{{ url_for('routes.watchlist_add') }}">
     <label>Year From (optional)
-        <select name="year_from">
+        <select name="year_from" id="year-from-select">
             <option value="">No limit</option>
             {% for year in years %}
                 <option value="{{ year }}">{{ year }}</option>
@@ -91,7 +91,7 @@
         </select>
     </label>
     <label>Year To (optional)
-        <select name="year_to">
+        <select name="year_to" id="year-to-select">
             <option value="">No limit</option>
             {% for year in years %}
                 <option value="{{ year }}">{{ year }}</option>
@@ -169,6 +169,7 @@
 {% if is_admin %}
     <a href="{{ url_for('routes.admin') }}">Admin Panel</a>
 {% endif %}
+<a href="{{ url_for('routes.settings') }}">Email Preferences</a>
 <a href="{{ url_for('routes.logout') }}">Log Out</a>
 <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 {% endblock %}

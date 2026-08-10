@@ -54,17 +54,27 @@ def initialize_database():
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             created_at TEXT,
-            is_admin INTEGER NOT NULL DEFAULT 0
+            is_admin INTEGER NOT NULL DEFAULT 0,
+            notify_daily_summary INTEGER NOT NULL DEFAULT 1,
+            notify_recently_found INTEGER NOT NULL DEFAULT 1,
+            notify_watchlist_matches INTEGER NOT NULL DEFAULT 1
         )
     """)
 
-    if USING_POSTGRES:
-        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin INTEGER NOT NULL DEFAULT 0")
-    else:
-        try:
-            cursor.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
-        except sqlite3.OperationalError:
-            pass  # already has the column
+    user_columns = [
+        ("is_admin", "INTEGER NOT NULL DEFAULT 0"),
+        ("notify_daily_summary", "INTEGER NOT NULL DEFAULT 1"),
+        ("notify_recently_found", "INTEGER NOT NULL DEFAULT 1"),
+        ("notify_watchlist_matches", "INTEGER NOT NULL DEFAULT 1"),
+    ]
+    for column, definition in user_columns:
+        if USING_POSTGRES:
+            cursor.execute(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {column} {definition}")
+        else:
+            try:
+                cursor.execute(f"ALTER TABLE users ADD COLUMN {column} {definition}")
+            except sqlite3.OperationalError:
+                pass  # already has the column
 
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS watchlist (
@@ -150,17 +160,71 @@ def create_user(email, password_hash, created_at):
 
 
 def get_user_by_email(email):
-    """Return (id, email, password_hash, created_at, is_admin) for this
-    email, or None if no user has that email."""
+    """Return (id, email, password_hash, created_at, is_admin,
+    notify_daily_summary, notify_recently_found, notify_watchlist_matches)
+    for this email, or None if no user has that email."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(_q("SELECT id, email, password_hash, created_at, is_admin FROM users WHERE email = ?"), (email,))
+    cursor.execute(_q("""
+        SELECT id, email, password_hash, created_at, is_admin,
+               notify_daily_summary, notify_recently_found, notify_watchlist_matches
+        FROM users WHERE email = ?
+    """), (email,))
     user = cursor.fetchone()
 
     conn.close()
 
     return user
+
+
+def get_user_by_id(user_id):
+    """Return (id, email, notify_daily_summary, notify_recently_found,
+    notify_watchlist_matches) for this user id, or None."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("""
+        SELECT id, email, notify_daily_summary, notify_recently_found, notify_watchlist_matches
+        FROM users WHERE id = ?
+    """), (user_id,))
+    user = cursor.fetchone()
+
+    conn.close()
+
+    return user
+
+
+def update_notification_preferences(user_id, daily_summary, recently_found, watchlist_matches):
+    """Update a user's email notification preferences."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("""
+        UPDATE users
+        SET notify_daily_summary = ?, notify_recently_found = ?, notify_watchlist_matches = ?
+        WHERE id = ?
+    """), (int(daily_summary), int(recently_found), int(watchlist_matches), user_id))
+
+    conn.commit()
+    conn.close()
+
+
+def get_users_for_notifications():
+    """Return every user's notification settings for the scraper to use:
+    [(id, email, notify_daily_summary, notify_recently_found, notify_watchlist_matches), ...]."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, email, notify_daily_summary, notify_recently_found, notify_watchlist_matches
+        FROM users
+    """)
+    users = cursor.fetchall()
+
+    conn.close()
+
+    return users
 
 
 def get_all_users():

@@ -14,9 +14,11 @@ from database.database import (
     get_matches_grouped,
     get_recent_vehicles,
     get_user_by_email,
+    get_user_by_id,
     get_watchlist,
     remove_watchlist_item,
     search_vehicles,
+    update_notification_preferences,
 )
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES
@@ -142,6 +144,31 @@ def dashboard():
         is_admin=session.get("is_admin", False),
         search_query=search_query,
         search_results=search_results,
+    )
+
+
+@routes.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    user_id = session["user_id"]
+
+    if request.method == "POST":
+        update_notification_preferences(
+            user_id,
+            daily_summary="notify_daily_summary" in request.form,
+            recently_found="notify_recently_found" in request.form,
+            watchlist_matches="notify_watchlist_matches" in request.form,
+        )
+        flash("Preferences saved.")
+        return redirect(url_for("routes.settings"))
+
+    user = get_user_by_id(user_id)
+    return render_template(
+        "settings.html",
+        email=session.get("user_email"),
+        notify_daily_summary=bool(user[2]),
+        notify_recently_found=bool(user[3]),
+        notify_watchlist_matches=bool(user[4]),
     )
 
 

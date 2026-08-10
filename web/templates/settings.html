@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Email Preferences</h2>
+<p>{{ email }}</p>
+
+<form method="post">
+    <label style="flex-direction: row; align-items: center; gap: 8px;">
+        <input type="checkbox" name="notify_daily_summary" {% if notify_daily_summary %}checked{% endif %}>
+        Daily summary (totals per yard, once a day)
+    </label>
+    <label style="flex-direction: row; align-items: center; gap: 8px;">
+        <input type="checkbox" name="notify_recently_found" {% if notify_recently_found %}checked{% endif %}>
+        Recently found (every new car, any make/model)
+    </label>
+    <label style="flex-direction: row; align-items: center; gap: 8px;">
+        <input type="checkbox" name="notify_watchlist_matches" {% if notify_watchlist_matches %}checked{% endif %}>
+        My watchlist matches (only new cars matching my own watchlist)
+    </label>
+    <button type="submit">Save Preferences</button>
+</form>
+
+<a href="{{ url_for('routes.dashboard') }}">Back to Dashboard</a>
+{% endblock %}
