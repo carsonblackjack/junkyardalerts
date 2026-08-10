@@ -1,8 +1,10 @@
 import sys
 import time
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 from database.database import (
+    SPOTTED_EXPIRY_DAYS,
+    delete_expired_spotted,
     get_inventory_counts_by_yard,
     get_users_for_notifications,
     get_watchlist,
@@ -38,6 +40,9 @@ def vehicle_matches_watchlist_item(vehicle, make, model, year_from, year_to):
 
 
 initialize_database()
+
+spotted_cutoff = (datetime.now(timezone.utc) - timedelta(days=SPOTTED_EXPIRY_DAYS)).isoformat()
+delete_expired_spotted(spotted_cutoff)
 
 total_count = 0
 new_count = 0

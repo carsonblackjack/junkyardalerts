@@ -3,6 +3,10 @@ import sqlite3
 
 DB_NAME = "inventory.db"
 
+# "Spotted" checkmarks on the Explore tab stop counting as checked after
+# this many days, so old sightings don't stick around forever.
+SPOTTED_EXPIRY_DAYS = 60
+
 # On your own PC there's no DATABASE_URL, so this always uses the local
 # SQLite file, exactly like before. Once deployed to a host with a Postgres
 # database attached, DATABASE_URL gets set automatically and this switches
@@ -99,6 +103,18 @@ def initialize_database():
                 cursor.execute(f"ALTER TABLE watchlist ADD COLUMN {column} TEXT NOT NULL DEFAULT ''")
             except sqlite3.OperationalError:
                 pass  # already has the column
+
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS spotted (
+            {id_column},
+            user_id INTEGER NOT NULL,
+            vehicle_id INTEGER NOT NULL,
+            spotted_at TEXT NOT NULL,
+            UNIQUE(user_id, vehicle_id),
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+        )
+    """)
 
     conn.commit()
     conn.close()
@@ -415,3 +431,88 @@ def get_inventory_counts_by_yard():
     conn.close()
 
     return counts
+
+
+def get_distinct_yards():
+    """Return every yard name we've seen, sorted, for the Explore yard picker."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT DISTINCT yard FROM vehicles ORDER BY yard")
+    yards = [row[0] for row in cursor.fetchall()]
+
+    conn.close()
+
+    return yards
+
+
+def get_explore_vehicles(user_id, spotted_cutoff, yard="", make="", model="", year_from="", year_to="", limit=200):
+    """Return vehicles matching the Explore filters, along with whether
+    this user has marked each one as spotted (within the last 60 days):
+    [(vehicle_id, year, make, model, row_location, yard, date_found, is_spotted), ...]."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("""
+        SELECT v.id, v.year, v.make, v.model, v.row_location, v.yard, v.date_found,
+               CASE WHEN s.id IS NOT NULL THEN 1 ELSE 0 END
+        FROM vehicles v
+        LEFT JOIN spotted s
+            ON s.vehicle_id = v.id AND s.user_id = ? AND s.spotted_at >= ?
+        WHERE (? = '' OR v.yard = ?)
+        AND (? = '' OR UPPER(v.make) = UPPER(?))
+        AND (? = '' OR UPPER(v.model) = UPPER(?))
+        AND (? = '' OR v.year >= ?)
+        AND (? = '' OR v.year <= ?)
+        ORDER BY v.date_found DESC
+        LIMIT ?
+    """), (
+        user_id, spotted_cutoff,
+        yard, yard,
+        make, make,
+        model, model,
+        year_from, year_from,
+        year_to, year_to,
+        limit,
+    ))
+    vehicles = cursor.fetchall()
+
+    conn.close()
+
+    return vehicles
+
+
+def toggle_spotted(user_id, vehicle_id, spotted_at):
+    """Mark a vehicle as spotted if it wasn't, or un-mark it if it was.
+    Returns the new state (True if now spotted, False if now cleared)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("SELECT id FROM spotted WHERE user_id = ? AND vehicle_id = ?"), (user_id, vehicle_id))
+    existing = cursor.fetchone()
+
+    if existing:
+        cursor.execute(_q("DELETE FROM spotted WHERE id = ?"), (existing[0],))
+        now_spotted = False
+    else:
+        cursor.execute(_q("""
+            INSERT INTO spotted (user_id, vehicle_id, spotted_at) VALUES (?, ?, ?)
+        """), (user_id, vehicle_id, spotted_at))
+        now_spotted = True
+
+    conn.commit()
+    conn.close()
+
+    return now_spotted
+
+
+def delete_expired_spotted(cutoff):
+    """Clear out spotted marks older than the cutoff (60 days), so the
+    table doesn't grow forever and old marks stop showing as checked."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("DELETE FROM spotted WHERE spotted_at < ?"), (cutoff,))
+
+    conn.commit()
+    conn.close()

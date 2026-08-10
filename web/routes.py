@@ -1,15 +1,18 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from database.database import (
+    SPOTTED_EXPIRY_DAYS,
     add_watchlist_item,
     create_user,
     get_all_users,
     get_distinct_models_for_make,
+    get_distinct_yards,
     get_distinct_years,
+    get_explore_vehicles,
     get_inventory_counts_by_yard,
     get_matches_grouped,
     get_recent_vehicles,
@@ -18,6 +21,7 @@ from database.database import (
     get_watchlist,
     remove_watchlist_item,
     search_vehicles,
+    toggle_spotted,
     update_notification_preferences,
 )
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES
@@ -28,6 +32,10 @@ routes = Blueprint("routes", __name__)
 
 # Every make either yard's website lets you search for, combined.
 ALL_MAKES = sorted(set(JALOPY_MAKES) | set(TRUSTY_MAKES))
+
+
+def spotted_cutoff():
+    return (datetime.now(timezone.utc) - timedelta(days=SPOTTED_EXPIRY_DAYS)).isoformat()
 
 
 def login_required(view):
@@ -170,6 +178,43 @@ def settings():
         notify_recently_found=bool(user[3]),
         notify_watchlist_matches=bool(user[4]),
     )
+
+
+@routes.route("/explore")
+@login_required
+def explore():
+    user_id = session["user_id"]
+
+    yard = request.args.get("yard", "")
+    make = request.args.get("make", "").strip().upper()
+    model = request.args.get("model", "").strip().upper()
+    year_from = request.args.get("year_from", "").strip()
+    year_to = request.args.get("year_to", "").strip()
+
+    vehicles = get_explore_vehicles(
+        user_id, spotted_cutoff(), yard=yard, make=make, model=model, year_from=year_from, year_to=year_to
+    )
+
+    return render_template(
+        "explore.html",
+        email=session.get("user_email"),
+        vehicles=vehicles,
+        yards=get_distinct_yards(),
+        makes=ALL_MAKES,
+        years=get_distinct_years(),
+        selected_yard=yard,
+        selected_make=make,
+        selected_model=model,
+        selected_year_from=year_from,
+        selected_year_to=year_to,
+    )
+
+
+@routes.route("/spotted/toggle/<int:vehicle_id>", methods=["POST"])
+@login_required
+def spotted_toggle(vehicle_id):
+    now_spotted = toggle_spotted(session["user_id"], vehicle_id, datetime.now(timezone.utc).isoformat())
+    return jsonify({"spotted": now_spotted})
 
 
 @routes.route("/admin")

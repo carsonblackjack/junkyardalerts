@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Explore</h2>
+<p>Pick a yard if you're standing in one right now, or leave it blank to browse everything. Check off cars you've actually seen in person - those checks clear themselves after 60 days.</p>
+
+<form method="get" action="{{ url_for('routes.explore') }}">
+    <label>Yard
+        <select name="yard">
+            <option value="">All yards</option>
+            {% for yard in yards %}
+                <option value="{{ yard }}" {% if yard == selected_yard %}selected{% endif %}>{{ yard }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Year From (optional)
+        <select name="year_from" id="year-from-select">
+            <option value="">No limit</option>
+            {% for year in years %}
+                <option value="{{ year }}" {% if year == selected_year_from %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Year To (optional)
+        <select name="year_to" id="year-to-select">
+            <option value="">No limit</option>
+            {% for year in years %}
+                <option value="{{ year }}" {% if year == selected_year_to %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Make (optional)
+        <select name="make" id="make-select">
+            <option value="">Any make</option>
+            {% for make in makes %}
+                <option value="{{ make }}" {% if make == selected_make %}selected{% endif %}>{{ make }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Model (optional)
+        <select name="model" id="model-select">
+            <option value="">Any model</option>
+            {% if selected_model %}
+                <option value="{{ selected_model }}" selected>{{ selected_model }}</option>
+            {% endif %}
+        </select>
+    </label>
+    <button type="submit">Filter</button>
+</form>
+
+{% if vehicles %}
+    <table>
+        <thead>
+            <tr>
+                <th>Spotted</th>
+                <th>Year</th>
+                <th>Make</th>
+                <th>Model</th>
+                <th>Row</th>
+                <th>Yard</th>
+                <th>Found</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vehicle_id, year, make, model, row_location, yard, date_found, is_spotted in vehicles %}
+                <tr>
+                    <td>
+                        <input type="checkbox" class="spotted-checkbox" data-vehicle-id="{{ vehicle_id }}" {% if is_spotted %}checked{% endif %}>
+                    </td>
+                    <td>{{ year }}</td>
+                    <td>{{ make }}</td>
+                    <td>{{ model }}</td>
+                    <td>{{ row_location }}</td>
+                    <td>{{ yard }}</td>
+                    <td>{{ date_found|us_date }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No vehicles match those filters.</p>
+{% endif %}
+
+<a href="{{ url_for('routes.dashboard') }}">Back to Dashboard</a>
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='explore.js') }}"></script>
+{% endblock %}

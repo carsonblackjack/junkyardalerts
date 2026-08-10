@@ -169,6 +169,7 @@
 {% if is_admin %}
     <a href="{{ url_for('routes.admin') }}">Admin Panel</a>
 {% endif %}
+<a href="{{ url_for('routes.explore') }}">Explore</a>
 <a href="{{ url_for('routes.settings') }}">Email Preferences</a>
 <a href="{{ url_for('routes.logout') }}">Log Out</a>
 <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
