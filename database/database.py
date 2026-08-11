@@ -1,4 +1,5 @@
 import os
+import re
 import sqlite3
 
 DB_NAME = "inventory.db"
@@ -410,24 +411,56 @@ def get_recent_vehicles(limit=20):
 
 
 def search_vehicles(query, limit=100):
-    """Return vehicles where the search term appears in year, make,
-    model, row, or yard - newest first."""
+    """Search by free text, e.g. "2002 Subaru Forester". A 4-digit word
+    is treated as a year and matched within +/-1 (yard parts commonly
+    interchange across nearby model years); every other word must
+    appear somewhere in make, model, row, or yard. Exact-year matches
+    are ranked above the +/-1 neighbors, newest first within each."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    like_term = f"%{query}%"
+    year_word = None
+    keywords = []
+    for word in query.split():
+        if year_word is None and re.fullmatch(r"\d{4}", word):
+            year_word = word
+        else:
+            keywords.append(word)
 
-    cursor.execute(_q("""
+    conditions = []
+    where_params = []
+
+    if year_word:
+        conditions.append("CAST(year AS INTEGER) BETWEEN ? AND ?")
+        where_params.extend([int(year_word) - 1, int(year_word) + 1])
+
+    for word in keywords:
+        like_term = f"%{word}%"
+        conditions.append("""(
+            UPPER(make) LIKE UPPER(?)
+            OR UPPER(model) LIKE UPPER(?)
+            OR UPPER(row_location) LIKE UPPER(?)
+            OR UPPER(yard) LIKE UPPER(?)
+        )""")
+        where_params.extend([like_term, like_term, like_term, like_term])
+
+    if not conditions:
+        conditions.append("1=1")
+
+    if year_word:
+        order_clause = "CASE WHEN year = ? THEN 0 ELSE 1 END, date_found DESC"
+        order_params = [year_word]
+    else:
+        order_clause = "date_found DESC"
+        order_params = []
+
+    cursor.execute(_q(f"""
         SELECT year, make, model, row_location, yard, date_found
         FROM vehicles
-        WHERE UPPER(year) LIKE UPPER(?)
-           OR UPPER(make) LIKE UPPER(?)
-           OR UPPER(model) LIKE UPPER(?)
-           OR UPPER(row_location) LIKE UPPER(?)
-           OR UPPER(yard) LIKE UPPER(?)
-        ORDER BY date_found DESC
+        WHERE {' AND '.join(conditions)}
+        ORDER BY {order_clause}
         LIMIT ?
-    """), (like_term, like_term, like_term, like_term, like_term, limit))
+    """), (*where_params, *order_params, limit))
     vehicles = cursor.fetchall()
 
     conn.close()
