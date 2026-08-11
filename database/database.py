@@ -494,40 +494,65 @@ def get_distinct_yards():
     return yards
 
 
-def get_explore_vehicles(user_id, spotted_cutoff, yard="", make="", model="", year_from="", year_to="", limit=200):
-    """Return vehicles matching the Explore filters, along with whether
-    this user has marked each one as spotted (within the last 60 days):
+_EXPLORE_FILTER_SQL = """
+    (? = '' OR v.yard = ?)
+    AND (? = '' OR UPPER(v.make) = UPPER(?))
+    AND (? = '' OR UPPER(v.model) = UPPER(?))
+    AND (? = '' OR v.year >= ?)
+    AND (? = '' OR v.year <= ?)
+"""
+
+
+def _explore_filter_params(yard, make, model, year_from, year_to):
+    return (yard, yard, make, make, model, model, year_from, year_from, year_to, year_to)
+
+
+def get_explore_vehicles(user_id, spotted_cutoff, yard="", make="", model="", year_from="", year_to="",
+                          limit=200, offset=0):
+    """Return one page of vehicles matching the Explore filters, along
+    with whether this user has marked each one as spotted (within the
+    last 60 days):
     [(vehicle_id, year, make, model, row_location, yard, date_found, is_spotted), ...]."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(_q("""
+    cursor.execute(_q(f"""
         SELECT v.id, v.year, v.make, v.model, v.row_location, v.yard, v.date_found,
                CASE WHEN s.id IS NOT NULL THEN 1 ELSE 0 END
         FROM vehicles v
         LEFT JOIN spotted s
             ON s.vehicle_id = v.id AND s.user_id = ? AND s.spotted_at >= ?
-        WHERE (? = '' OR v.yard = ?)
-        AND (? = '' OR UPPER(v.make) = UPPER(?))
-        AND (? = '' OR UPPER(v.model) = UPPER(?))
-        AND (? = '' OR v.year >= ?)
-        AND (? = '' OR v.year <= ?)
+        WHERE {_EXPLORE_FILTER_SQL}
         ORDER BY v.date_found DESC
-        LIMIT ?
+        LIMIT ? OFFSET ?
     """), (
         user_id, spotted_cutoff,
-        yard, yard,
-        make, make,
-        model, model,
-        year_from, year_from,
-        year_to, year_to,
-        limit,
+        *_explore_filter_params(yard, make, model, year_from, year_to),
+        limit, offset,
     ))
     vehicles = cursor.fetchall()
 
     conn.close()
 
     return vehicles
+
+
+def get_explore_vehicle_count(yard="", make="", model="", year_from="", year_to=""):
+    """Return how many vehicles match the Explore filters in total,
+    for the "Showing X-Y of Z" count and pagination."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q(f"""
+        SELECT COUNT(*)
+        FROM vehicles v
+        WHERE {_EXPLORE_FILTER_SQL}
+    """), _explore_filter_params(yard, make, model, year_from, year_to))
+    count = cursor.fetchone()[0]
+
+    conn.close()
+
+    return count
 
 
 def toggle_spotted(user_id, vehicle_id, spotted_at):

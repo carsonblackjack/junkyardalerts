@@ -12,6 +12,7 @@ from database.database import (
     get_distinct_models_for_make,
     get_distinct_yards,
     get_distinct_years,
+    get_explore_vehicle_count,
     get_explore_vehicles,
     get_inventory_counts_by_yard,
     get_matches_grouped,
@@ -189,6 +190,9 @@ def settings():
     )
 
 
+EXPLORE_PAGE_SIZE = 200
+
+
 @routes.route("/explore")
 @login_required
 def explore():
@@ -200,8 +204,17 @@ def explore():
     year_from = request.args.get("year_from", "").strip()
     year_to = request.args.get("year_to", "").strip()
 
+    page = max(request.args.get("page", 1, type=int), 1)
+    offset = (page - 1) * EXPLORE_PAGE_SIZE
+
+    total_count = get_explore_vehicle_count(yard=yard, make=make, model=model, year_from=year_from, year_to=year_to)
+    total_pages = max((total_count + EXPLORE_PAGE_SIZE - 1) // EXPLORE_PAGE_SIZE, 1)
+    page = min(page, total_pages)
+    offset = (page - 1) * EXPLORE_PAGE_SIZE
+
     vehicles = get_explore_vehicles(
-        user_id, spotted_cutoff(), yard=yard, make=make, model=model, year_from=year_from, year_to=year_to
+        user_id, spotted_cutoff(), yard=yard, make=make, model=model, year_from=year_from, year_to=year_to,
+        limit=EXPLORE_PAGE_SIZE, offset=offset,
     )
 
     return render_template(
@@ -216,6 +229,11 @@ def explore():
         selected_model=model,
         selected_year_from=year_from,
         selected_year_to=year_to,
+        page=page,
+        total_pages=total_pages,
+        total_count=total_count,
+        range_start=offset + 1 if total_count else 0,
+        range_end=min(offset + EXPLORE_PAGE_SIZE, total_count),
     )
 
 

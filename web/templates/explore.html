@@ -48,6 +48,7 @@
 </form>
 
 {% if vehicles %}
+    <p class="result-count">Showing {{ range_start }}&ndash;{{ range_end }} of {{ total_count }}</p>
     <table>
         <thead>
             <tr>
@@ -76,6 +77,19 @@
             {% endfor %}
         </tbody>
     </table>
+
+    {% if total_pages > 1 %}
+        {% set filter_args = {'yard': selected_yard, 'make': selected_make, 'model': selected_model, 'year_from': selected_year_from, 'year_to': selected_year_to} %}
+        <nav class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('routes.explore', page=page-1, **filter_args) }}">&larr; Previous</a>
+            {% endif %}
+            <span class="page-indicator">Page {{ page }} of {{ total_pages }}</span>
+            {% if page < total_pages %}
+                <a href="{{ url_for('routes.explore', page=page+1, **filter_args) }}">Next &rarr;</a>
+            {% endif %}
+        </nav>
+    {% endif %}
 {% else %}
     <p>No vehicles match those filters.</p>
 {% endif %}

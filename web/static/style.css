@@ -303,6 +303,33 @@ tr:hover td {
     background: var(--surface);
 }
 
+.result-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin: 14px 0 0;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
+    font-size: 0.9rem;
+}
+.pagination a {
+    font-weight: 600;
+    text-decoration: none;
+}
+.pagination a:hover {
+    text-decoration: underline;
+}
+.page-indicator {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+}
+
 ul {
     list-style: none;
     padding: 0;
