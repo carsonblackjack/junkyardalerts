@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Welcome, {{ email }}</h2>
+<h2>Welcome, {{ display_name }}</h2>
 
 <h3>Search Inventory</h3>
 <form method="get" action="{{ url_for('routes.dashboard') }}">
@@ -166,11 +166,5 @@
     <p>No matches yet. Once a watched car shows up in inventory, it'll appear here.</p>
 {% endif %}
 
-{% if is_admin %}
-    <a href="{{ url_for('routes.admin') }}">Admin Panel</a>
-{% endif %}
-<a href="{{ url_for('routes.explore') }}">Explore</a>
-<a href="{{ url_for('routes.settings') }}">Email Preferences</a>
-<a href="{{ url_for('routes.logout') }}">Log Out</a>
 <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 {% endblock %}

@@ -22,6 +22,7 @@ from database.database import (
     remove_watchlist_item,
     search_vehicles,
     toggle_spotted,
+    update_first_name,
     update_notification_preferences,
 )
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES
@@ -77,13 +78,14 @@ def register():
 
         email = request.form["email"].strip().lower()
         password = request.form["password"]
+        first_name = request.form.get("first_name", "").strip()
 
         if not email or not password:
             flash("Email and password are required.")
             return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
         password_hash = generate_password_hash(password)
-        created = create_user(email, password_hash, datetime.now(timezone.utc).isoformat())
+        created = create_user(email, password_hash, datetime.now(timezone.utc).isoformat(), first_name)
 
         if not created:
             flash("An account with that email already exists.")
@@ -115,6 +117,7 @@ def login():
         session["user_id"] = user[0]
         session["user_email"] = user[1]
         session["is_admin"] = bool(user[4])
+        session["first_name"] = user[8]
         return redirect(url_for("routes.dashboard"))
 
     return render_template("login.html", turnstile_site_key=TURNSTILE_SITE_KEY)
@@ -142,6 +145,7 @@ def dashboard():
     return render_template(
         "dashboard.html",
         email=session.get("user_email"),
+        display_name=session.get("first_name") or session.get("user_email"),
         watchlist=watchlist,
         match_groups=match_groups,
         makes=ALL_MAKES,
@@ -161,6 +165,10 @@ def settings():
     user_id = session["user_id"]
 
     if request.method == "POST":
+        first_name = request.form.get("first_name", "").strip()
+        update_first_name(user_id, first_name)
+        session["first_name"] = first_name
+
         update_notification_preferences(
             user_id,
             daily_summary="notify_daily_summary" in request.form,
@@ -174,6 +182,7 @@ def settings():
     return render_template(
         "settings.html",
         email=session.get("user_email"),
+        first_name=user[5],
         notify_daily_summary=bool(user[2]),
         notify_recently_found=bool(user[3]),
         notify_watchlist_matches=bool(user[4]),

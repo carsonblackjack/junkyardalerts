@@ -20,6 +20,17 @@
             <h1>YARD<span class="accent-w">WATCH</span></h1>
         </a>
     </header>
+    {% if session.user_id %}
+        <nav class="main-nav">
+            <a href="{{ url_for('routes.dashboard') }}" class="{% if request.endpoint == 'routes.dashboard' %}active{% endif %}">Dashboard</a>
+            <a href="{{ url_for('routes.explore') }}" class="{% if request.endpoint == 'routes.explore' %}active{% endif %}">Explore</a>
+            <a href="{{ url_for('routes.settings') }}" class="{% if request.endpoint == 'routes.settings' %}active{% endif %}">Settings</a>
+            {% if session.is_admin %}
+                <a href="{{ url_for('routes.admin') }}" class="{% if request.endpoint == 'routes.admin' %}active{% endif %}">Admin</a>
+            {% endif %}
+            <a href="{{ url_for('routes.logout') }}" class="logout">Log Out</a>
+        </nav>
+    {% endif %}
     <main>
         {% with messages = get_flashed_messages() %}
             {% if messages %}

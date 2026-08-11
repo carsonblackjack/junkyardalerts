@@ -152,6 +152,41 @@ header h1 .accent-w {
     color: var(--accent);
 }
 
+.main-nav {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 10px 0 20px;
+    border-bottom: 1px solid var(--border);
+}
+.main-nav a {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--text-dim);
+    padding: 11px 14px;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+.main-nav a:hover {
+    color: var(--accent);
+}
+.main-nav a.active {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+}
+.main-nav a.logout {
+    margin-left: auto;
+    color: var(--text-dim);
+}
+.main-nav a.logout:hover {
+    color: var(--accent);
+}
+
 h2, h3, h4 {
     font-family: 'Bebas Neue', sans-serif;
     font-weight: 400;
@@ -170,6 +205,12 @@ form {
     align-items: flex-end;
 }
 
+form.stack {
+    flex-direction: column;
+    align-items: stretch;
+    max-width: 420px;
+}
+
 label {
     display: flex;
     flex-direction: column;
@@ -177,6 +218,20 @@ label {
     font-size: 13px;
     font-weight: 600;
     color: var(--text-dim);
+}
+
+label.checkbox-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--text);
+}
+label.checkbox-row input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--accent);
 }
 
 input, select {

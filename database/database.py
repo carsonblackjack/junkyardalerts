@@ -61,7 +61,8 @@ def initialize_database():
             is_admin INTEGER NOT NULL DEFAULT 0,
             notify_daily_summary INTEGER NOT NULL DEFAULT 1,
             notify_recently_found INTEGER NOT NULL DEFAULT 1,
-            notify_watchlist_matches INTEGER NOT NULL DEFAULT 1
+            notify_watchlist_matches INTEGER NOT NULL DEFAULT 1,
+            first_name TEXT NOT NULL DEFAULT ''
         )
     """)
 
@@ -70,6 +71,7 @@ def initialize_database():
         ("notify_daily_summary", "INTEGER NOT NULL DEFAULT 1"),
         ("notify_recently_found", "INTEGER NOT NULL DEFAULT 1"),
         ("notify_watchlist_matches", "INTEGER NOT NULL DEFAULT 1"),
+        ("first_name", "TEXT NOT NULL DEFAULT ''"),
     ]
     for column, definition in user_columns:
         if USING_POSTGRES:
@@ -153,7 +155,7 @@ def save_vehicle(year, make, model, row_location, yard, date_found):
     return is_new
 
 
-def create_user(email, password_hash, created_at):
+def create_user(email, password_hash, created_at, first_name=""):
     """Add a new user. Returns True if created, False if that email is
     already taken (email must be unique)."""
     conn = get_connection()
@@ -161,9 +163,9 @@ def create_user(email, password_hash, created_at):
 
     try:
         cursor.execute(_q("""
-            INSERT INTO users (email, password_hash, created_at)
-            VALUES (?, ?, ?)
-        """), (email, password_hash, created_at))
+            INSERT INTO users (email, password_hash, created_at, first_name)
+            VALUES (?, ?, ?, ?)
+        """), (email, password_hash, created_at, first_name))
         conn.commit()
         created = True
     except IntegrityError:
@@ -177,14 +179,15 @@ def create_user(email, password_hash, created_at):
 
 def get_user_by_email(email):
     """Return (id, email, password_hash, created_at, is_admin,
-    notify_daily_summary, notify_recently_found, notify_watchlist_matches)
-    for this email, or None if no user has that email."""
+    notify_daily_summary, notify_recently_found, notify_watchlist_matches,
+    first_name) for this email, or None if no user has that email."""
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(_q("""
         SELECT id, email, password_hash, created_at, is_admin,
-               notify_daily_summary, notify_recently_found, notify_watchlist_matches
+               notify_daily_summary, notify_recently_found, notify_watchlist_matches,
+               first_name
         FROM users WHERE email = ?
     """), (email,))
     user = cursor.fetchone()
@@ -196,12 +199,13 @@ def get_user_by_email(email):
 
 def get_user_by_id(user_id):
     """Return (id, email, notify_daily_summary, notify_recently_found,
-    notify_watchlist_matches) for this user id, or None."""
+    notify_watchlist_matches, first_name) for this user id, or None."""
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(_q("""
-        SELECT id, email, notify_daily_summary, notify_recently_found, notify_watchlist_matches
+        SELECT id, email, notify_daily_summary, notify_recently_found,
+               notify_watchlist_matches, first_name
         FROM users WHERE id = ?
     """), (user_id,))
     user = cursor.fetchone()
@@ -221,6 +225,17 @@ def update_notification_preferences(user_id, daily_summary, recently_found, watc
         SET notify_daily_summary = ?, notify_recently_found = ?, notify_watchlist_matches = ?
         WHERE id = ?
     """), (int(daily_summary), int(recently_found), int(watchlist_matches), user_id))
+
+    conn.commit()
+    conn.close()
+
+
+def update_first_name(user_id, first_name):
+    """Update a user's first name."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("UPDATE users SET first_name = ? WHERE id = ?"), (first_name, user_id))
 
     conn.commit()
     conn.close()
