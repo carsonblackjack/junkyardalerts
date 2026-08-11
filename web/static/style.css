@@ -217,10 +217,14 @@ button:hover {
 }
 
 table {
+    display: block;
     width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
     border-collapse: collapse;
     margin-top: 10px;
     font-size: 0.92rem;
+    white-space: nowrap;
 }
 
 th, td {
