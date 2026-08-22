@@ -43,5 +43,9 @@
         {% endwith %}
         {% block content %}{% endblock %}
     </main>
+    <footer class="foot-nav">
+        <a href="{{ url_for('routes.terms') }}">Terms of Service</a>
+        <a href="{{ url_for('routes.privacy') }}">Privacy Policy</a>
+    </footer>
 </body>
 </html>
