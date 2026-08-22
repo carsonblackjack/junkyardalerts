@@ -12,7 +12,7 @@ SENDGRID_URL = "https://api.sendgrid.com/v3/mail/send"
 WEBSITE_URL = "https://yard-watch.com"
 
 
-def send_email(to_email, subject, body):
+def send_email(to_email, subject, body, unsubscribe_url=None):
     """Send a plain-text email through SendGrid. Does nothing (just prints
     a warning) if the .env file isn't set up yet, so a missing config
     doesn't crash the whole scrape run."""
@@ -21,6 +21,8 @@ def send_email(to_email, subject, body):
         return
 
     full_body = f"{body}\n\n---\nCheck it out: {WEBSITE_URL}"
+    if unsubscribe_url:
+        full_body += f"\nUnsubscribe from all YardWatch emails: {unsubscribe_url}"
 
     payload = {
         "personalizations": [{"to": [{"email": to_email}]}],

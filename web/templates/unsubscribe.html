@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+{% if email %}
+    <h2>You're Unsubscribed</h2>
+    <p>{{ email }} won't get any more YardWatch emails - daily summaries, new-vehicle alerts, or watchlist matches.</p>
+    <p>Changed your mind? Log in and turn them back on anytime from Settings.</p>
+{% else %}
+    <h2>Link Not Valid</h2>
+    <p>That unsubscribe link doesn't match an account. If you're still getting emails you don't want, log in and update your preferences from Settings.</p>
+{% endif %}
+{% endblock %}

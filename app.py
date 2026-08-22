@@ -12,7 +12,7 @@ from database.database import (
     save_vehicle,
     update_yard_sync,
 )
-from notifications.notifier import send_email
+from notifications.notifier import WEBSITE_URL, send_email
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES, YARD_LOCATIONS as JALOPY_LOCATIONS, JalopyScraper
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES, TrustyPapScraper
 
@@ -115,9 +115,11 @@ if send_summary:
 
 # Every registered user gets exactly the emails they've opted into, in
 # their own settings - not one broadcast address for everyone.
-for user_id, email, notify_daily_summary, notify_recently_found, notify_watchlist_matches in get_users_for_notifications():
+for user_id, email, notify_daily_summary, notify_recently_found, notify_watchlist_matches, unsubscribe_token in get_users_for_notifications():
+    unsubscribe_url = f"{WEBSITE_URL}/unsubscribe/{unsubscribe_token}"
+
     if notify_recently_found and new_vehicles:
-        send_email(email, recently_found_subject, "\n".join(recently_found_lines))
+        send_email(email, recently_found_subject, "\n".join(recently_found_lines), unsubscribe_url)
         print(f"Sent 'recently found' email to {email}.")
 
     if notify_watchlist_matches and new_vehicles:
@@ -138,10 +140,11 @@ for user_id, email, notify_daily_summary, notify_recently_found, notify_watchlis
             send_email(
                 email,
                 f"YardWatch: {len(personal_matches)} watchlist match(es) found",
-                "\n".join(lines)
+                "\n".join(lines),
+                unsubscribe_url,
             )
             print(f"Sent watchlist match email to {email}.")
 
     if notify_daily_summary and send_summary:
-        send_email(email, "YardWatch Daily Summary", summary_body)
+        send_email(email, "YardWatch Daily Summary", summary_body, unsubscribe_url)
         print(f"Sent daily summary email to {email}.")

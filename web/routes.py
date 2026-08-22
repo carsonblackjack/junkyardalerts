@@ -24,6 +24,7 @@ from database.database import (
     remove_watchlist_item,
     search_vehicles,
     toggle_spotted,
+    unsubscribe_by_token,
     update_first_name,
     update_notification_preferences,
 )
@@ -129,6 +130,14 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("routes.login"))
+
+
+@routes.route("/unsubscribe/<token>")
+def unsubscribe(token):
+    """One click from an email, no login required - turns off every
+    email type for whoever owns this token."""
+    email = unsubscribe_by_token(token)
+    return render_template("unsubscribe.html", email=email)
 
 
 @routes.route("/dashboard")

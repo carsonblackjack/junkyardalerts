@@ -1,5 +1,6 @@
 import os
 import re
+import secrets
 import sqlite3
 
 DB_NAME = "inventory.db"
@@ -63,7 +64,8 @@ def initialize_database():
             notify_daily_summary INTEGER NOT NULL DEFAULT 1,
             notify_recently_found INTEGER NOT NULL DEFAULT 1,
             notify_watchlist_matches INTEGER NOT NULL DEFAULT 1,
-            first_name TEXT NOT NULL DEFAULT ''
+            first_name TEXT NOT NULL DEFAULT '',
+            unsubscribe_token TEXT NOT NULL DEFAULT ''
         )
     """)
 
@@ -73,6 +75,7 @@ def initialize_database():
         ("notify_recently_found", "INTEGER NOT NULL DEFAULT 1"),
         ("notify_watchlist_matches", "INTEGER NOT NULL DEFAULT 1"),
         ("first_name", "TEXT NOT NULL DEFAULT ''"),
+        ("unsubscribe_token", "TEXT NOT NULL DEFAULT ''"),
     ]
     for column, definition in user_columns:
         if USING_POSTGRES:
@@ -82,6 +85,14 @@ def initialize_database():
                 cursor.execute(f"ALTER TABLE users ADD COLUMN {column} {definition}")
             except sqlite3.OperationalError:
                 pass  # already has the column
+
+    # Backfill an unsubscribe token for any user who doesn't have one yet
+    # (existing accounts from before this feature). Generated one at a
+    # time - 256 bits of randomness each, so a DB-level UNIQUE constraint
+    # isn't needed to avoid collisions.
+    cursor.execute("SELECT id FROM users WHERE unsubscribe_token = ''")
+    for (user_id,) in cursor.fetchall():
+        cursor.execute(_q("UPDATE users SET unsubscribe_token = ? WHERE id = ?"), (secrets.token_urlsafe(32), user_id))
 
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS watchlist (
@@ -171,9 +182,9 @@ def create_user(email, password_hash, created_at, first_name=""):
 
     try:
         cursor.execute(_q("""
-            INSERT INTO users (email, password_hash, created_at, first_name)
-            VALUES (?, ?, ?, ?)
-        """), (email, password_hash, created_at, first_name))
+            INSERT INTO users (email, password_hash, created_at, first_name, unsubscribe_token)
+            VALUES (?, ?, ?, ?, ?)
+        """), (email, password_hash, created_at, first_name, secrets.token_urlsafe(32)))
         conn.commit()
         created = True
     except IntegrityError:
@@ -251,12 +262,14 @@ def update_first_name(user_id, first_name):
 
 def get_users_for_notifications():
     """Return every user's notification settings for the scraper to use:
-    [(id, email, notify_daily_summary, notify_recently_found, notify_watchlist_matches), ...]."""
+    [(id, email, notify_daily_summary, notify_recently_found,
+    notify_watchlist_matches, unsubscribe_token), ...]."""
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, email, notify_daily_summary, notify_recently_found, notify_watchlist_matches
+        SELECT id, email, notify_daily_summary, notify_recently_found,
+               notify_watchlist_matches, unsubscribe_token
         FROM users
     """)
     users = cursor.fetchall()
@@ -264,6 +277,31 @@ def get_users_for_notifications():
     conn.close()
 
     return users
+
+
+def unsubscribe_by_token(token):
+    """Turn off all email notifications for whoever owns this token.
+    Returns the user's email if found, or None if the token is invalid."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("SELECT id, email FROM users WHERE unsubscribe_token = ?"), (token,))
+    user = cursor.fetchone()
+
+    if not user:
+        conn.close()
+        return None
+
+    cursor.execute(_q("""
+        UPDATE users
+        SET notify_daily_summary = 0, notify_recently_found = 0, notify_watchlist_matches = 0
+        WHERE id = ?
+    """), (user[0],))
+
+    conn.commit()
+    conn.close()
+
+    return user[1]
 
 
 def get_all_users():
