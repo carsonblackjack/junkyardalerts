@@ -28,6 +28,7 @@ from database.database import (
     log_search,
     remove_watchlist_item,
     search_vehicles,
+    set_admin_status,
     toggle_spotted,
     unsubscribe_by_token,
     update_first_name,
@@ -64,6 +65,20 @@ def admin_required(view):
         if "user_id" not in session:
             return redirect(url_for("routes.login"))
         if not session.get("is_admin"):
+            flash("You don't have access to that page.")
+            return redirect(url_for("routes.dashboard"))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def super_admin_required(view):
+    """Redirect non-super-admins back to the dashboard. Super-admins get
+    the analytics view and the ability to grant/revoke admin access."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("routes.login"))
+        if not session.get("is_super_admin"):
             flash("You don't have access to that page.")
             return redirect(url_for("routes.dashboard"))
         return view(*args, **kwargs)
@@ -126,6 +141,7 @@ def login():
         session["user_email"] = user[1]
         session["is_admin"] = bool(user[4])
         session["first_name"] = user[8]
+        session["is_super_admin"] = bool(user[9])
         return redirect(url_for("routes.dashboard"))
 
     return render_template("login.html", turnstile_site_key=TURNSTILE_SITE_KEY)
@@ -280,16 +296,32 @@ def admin():
     users = get_all_users()
     counts_by_yard = get_inventory_counts_by_yard()
     total_vehicles = sum(count for _, count in counts_by_yard)
-    return render_template(
-        "admin.html",
-        users=users,
-        counts_by_yard=counts_by_yard,
-        total_vehicles=total_vehicles,
-        top_searches=get_top_searches(),
-        top_watchlist_demand=get_top_watchlist_demand(),
-        unmet_searches=get_unmet_searches(),
-        unmet_watchlist_demand=get_unmet_watchlist_demand(),
-    )
+    viewer_is_super_admin = session.get("is_super_admin", False)
+
+    context = {
+        "users": users,
+        "counts_by_yard": counts_by_yard,
+        "total_vehicles": total_vehicles,
+        "viewer_is_super_admin": viewer_is_super_admin,
+    }
+
+    if viewer_is_super_admin:
+        context.update(
+            top_searches=get_top_searches(),
+            top_watchlist_demand=get_top_watchlist_demand(),
+            unmet_searches=get_unmet_searches(),
+            unmet_watchlist_demand=get_unmet_watchlist_demand(),
+        )
+
+    return render_template("admin.html", **context)
+
+
+@routes.route("/admin/set-admin/<int:user_id>", methods=["POST"])
+@super_admin_required
+def admin_set_admin(user_id):
+    make_admin = request.form.get("make_admin") == "1"
+    set_admin_status(user_id, make_admin)
+    return redirect(url_for("routes.admin"))
 
 
 @routes.route("/api/models/<make>")

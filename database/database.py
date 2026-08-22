@@ -2,8 +2,19 @@ import os
 import re
 import secrets
 import sqlite3
+from datetime import datetime, timezone
+
+from werkzeug.security import generate_password_hash
 
 DB_NAME = "inventory.db"
+
+# The site owner's account always gets super-admin access (analytics +
+# granting admin to others), and a standing master admin account exists
+# for testing and for handing out admin access without using a personal
+# login. Both checks below are safe to run on every startup - they only
+# act the first time.
+OWNER_EMAIL = "carsonblack2@gmail.com"
+MASTER_ADMIN_EMAIL = "master@yard-watch.com"
 
 # "Spotted" checkmarks on the Explore tab stop counting as checked after
 # this many days, so old sightings don't stick around forever.
@@ -61,6 +72,7 @@ def initialize_database():
             password_hash TEXT NOT NULL,
             created_at TEXT,
             is_admin INTEGER NOT NULL DEFAULT 0,
+            is_super_admin INTEGER NOT NULL DEFAULT 0,
             notify_daily_summary INTEGER NOT NULL DEFAULT 1,
             notify_recently_found INTEGER NOT NULL DEFAULT 1,
             notify_watchlist_matches INTEGER NOT NULL DEFAULT 1,
@@ -71,6 +83,7 @@ def initialize_database():
 
     user_columns = [
         ("is_admin", "INTEGER NOT NULL DEFAULT 0"),
+        ("is_super_admin", "INTEGER NOT NULL DEFAULT 0"),
         ("notify_daily_summary", "INTEGER NOT NULL DEFAULT 1"),
         ("notify_recently_found", "INTEGER NOT NULL DEFAULT 1"),
         ("notify_watchlist_matches", "INTEGER NOT NULL DEFAULT 1"),
@@ -145,6 +158,24 @@ def initialize_database():
         )
     """)
 
+    cursor.execute(_q("UPDATE users SET is_super_admin = 1 WHERE email = ?"), (OWNER_EMAIL,))
+
+    cursor.execute(_q("SELECT id FROM users WHERE email = ?"), (MASTER_ADMIN_EMAIL,))
+    if cursor.fetchone() is None:
+        master_password = secrets.token_urlsafe(18)
+        cursor.execute(_q("""
+            INSERT INTO users (email, password_hash, created_at, first_name, unsubscribe_token, is_admin, is_super_admin)
+            VALUES (?, ?, ?, ?, ?, 1, 1)
+        """), (
+            MASTER_ADMIN_EMAIL,
+            generate_password_hash(master_password),
+            datetime.now(timezone.utc).isoformat(),
+            "Master Admin",
+            secrets.token_urlsafe(32),
+        ))
+        print(f"Created master admin account: {MASTER_ADMIN_EMAIL} / {master_password}")
+        print("Save this password now - it won't be shown again.")
+
     conn.commit()
     conn.close()
 
@@ -207,14 +238,15 @@ def create_user(email, password_hash, created_at, first_name=""):
 def get_user_by_email(email):
     """Return (id, email, password_hash, created_at, is_admin,
     notify_daily_summary, notify_recently_found, notify_watchlist_matches,
-    first_name) for this email, or None if no user has that email."""
+    first_name, is_super_admin) for this email, or None if no user has
+    that email."""
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(_q("""
         SELECT id, email, password_hash, created_at, is_admin,
                notify_daily_summary, notify_recently_found, notify_watchlist_matches,
-               first_name
+               first_name, is_super_admin
         FROM users WHERE email = ?
     """), (email,))
     user = cursor.fetchone()
@@ -314,15 +346,15 @@ def unsubscribe_by_token(token):
 
 def get_all_users():
     """Return every registered user for the admin panel:
-    (id, email, created_at, is_admin, watchlist_item_count)."""
+    (id, email, created_at, is_admin, is_super_admin, watchlist_item_count)."""
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT u.id, u.email, u.created_at, u.is_admin, COUNT(w.id)
+        SELECT u.id, u.email, u.created_at, u.is_admin, u.is_super_admin, COUNT(w.id)
         FROM users u
         LEFT JOIN watchlist w ON w.user_id = u.id
-        GROUP BY u.id, u.email, u.created_at, u.is_admin
+        GROUP BY u.id, u.email, u.created_at, u.is_admin, u.is_super_admin
         ORDER BY u.created_at
     """)
     users = cursor.fetchall()
@@ -330,6 +362,21 @@ def get_all_users():
     conn.close()
 
     return users
+
+
+def set_admin_status(user_id, is_admin):
+    """Grant or revoke regular admin access for a user. Super-admins are
+    excluded from the WHERE clause on purpose - their admin access can't
+    be changed through this, even by a direct request to the route."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        _q("UPDATE users SET is_admin = ? WHERE id = ? AND is_super_admin = 0"), (int(is_admin), user_id)
+    )
+
+    conn.commit()
+    conn.close()
 
 
 def log_search(query, searched_at):
@@ -363,24 +410,53 @@ def get_top_searches(limit=15):
     return results
 
 
-def get_top_watchlist_demand(limit=15):
-    """Return [(make, model, watcher_count), ...], most-watchlisted
-    make/model combos first. Blank model means "any model of this make"."""
+def _watchlist_demand_groups():
+    """Group every watchlist entry by (make, model). Returns
+    {(make, model): {"count": int, "year_from": str, "year_to": str}} -
+    year_from/year_to summarize the range being asked for across everyone
+    watching that make/model, blank meaning at least one watcher left
+    that end open (wants "any" on that side)."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(_q("""
-        SELECT make, model, COUNT(*) AS watcher_count
-        FROM watchlist
-        GROUP BY make, model
-        ORDER BY watcher_count DESC
-        LIMIT ?
-    """), (limit,))
-    results = cursor.fetchall()
+    cursor.execute("SELECT make, model, year_from, year_to FROM watchlist")
+    rows = cursor.fetchall()
 
     conn.close()
 
-    return results
+    groups = {}
+    for make, model, year_from, year_to in rows:
+        group = groups.setdefault((make, model), {"count": 0, "froms": [], "tos": []})
+        group["count"] += 1
+        group["froms"].append(year_from)
+        group["tos"].append(year_to)
+
+    def combined_bound(values, pick):
+        return "" if "" in values else pick(values)
+
+    return {
+        key: {
+            "count": g["count"],
+            "year_from": combined_bound(g["froms"], min),
+            "year_to": combined_bound(g["tos"], max),
+        }
+        for key, g in groups.items()
+    }
+
+
+def get_top_watchlist_demand(limit=15):
+    """Return [(make, model, watcher_count, year_from, year_to), ...],
+    most-watchlisted make/model combos first. Blank model means "any
+    model of this make"."""
+    groups = _watchlist_demand_groups()
+
+    results = [
+        (make, model, g["count"], g["year_from"], g["year_to"])
+        for (make, model), g in groups.items()
+    ]
+    results.sort(key=lambda r: r[2], reverse=True)
+
+    return results[:limit]
 
 
 def get_unmet_watchlist_demand(limit=15):
@@ -389,23 +465,26 @@ def get_unmet_watchlist_demand(limit=15):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(_q("""
-        SELECT w.make, w.model, COUNT(*) AS watcher_count
-        FROM watchlist w
-        WHERE NOT EXISTS (
-            SELECT 1 FROM vehicles v
-            WHERE UPPER(v.make) = UPPER(w.make)
-            AND (w.model = '' OR UPPER(v.model) = UPPER(w.model))
-        )
-        GROUP BY w.make, w.model
-        ORDER BY watcher_count DESC
-        LIMIT ?
-    """), (limit,))
-    results = cursor.fetchall()
+    cursor.execute("SELECT DISTINCT UPPER(make), UPPER(model) FROM vehicles")
+    in_stock = set(cursor.fetchall())
+    cursor.execute("SELECT DISTINCT UPPER(make) FROM vehicles")
+    makes_in_stock = {row[0] for row in cursor.fetchall()}
 
     conn.close()
 
-    return results
+    groups = _watchlist_demand_groups()
+
+    unmet = []
+    for (make, model), g in groups.items():
+        has_match = (
+            (make.upper(), model.upper()) in in_stock if model
+            else make.upper() in makes_in_stock
+        )
+        if not has_match:
+            unmet.append((make, model, g["count"], g["year_from"], g["year_to"]))
+    unmet.sort(key=lambda r: r[2], reverse=True)
+
+    return unmet[:limit]
 
 
 def get_unmet_searches(limit=15, candidates=50):
