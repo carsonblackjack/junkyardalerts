@@ -10,6 +10,7 @@ from database.database import (
     get_watchlist,
     initialize_database,
     save_vehicle,
+    update_yard_sync,
 )
 from notifications.notifier import send_email
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES, YARD_LOCATIONS as JALOPY_LOCATIONS, JalopyScraper
@@ -88,6 +89,8 @@ for yard in YARDS:
                 )
 
         time.sleep(1)  # wait a bit between checks so we don't hammer their site
+
+    update_yard_sync(yard["name"], datetime.now(timezone.utc).isoformat())
 
 print(f"\nDone. Checked {total_count} vehicles, found {new_count} new.")
 

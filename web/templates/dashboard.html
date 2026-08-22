@@ -46,7 +46,7 @@
 <p>Tracking <strong>{{ total_vehicles }}</strong> vehicles across {{ counts_by_yard|length }} yards.</p>
 <ul class="yard-counts">
     {% for yard, count in counts_by_yard %}
-        <li>{{ yard }}: {{ count }}</li>
+        <li>{{ yard }}: {{ count }} <span class="sync-time">(synced {{ yard_sync_times.get(yard)|relative_time }})</span></li>
     {% endfor %}
 </ul>
 

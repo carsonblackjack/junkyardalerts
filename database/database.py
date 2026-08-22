@@ -119,6 +119,13 @@ def initialize_database():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS yard_sync (
+            yard TEXT PRIMARY KEY,
+            last_synced_at TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -492,6 +499,34 @@ def get_distinct_yards():
     conn.close()
 
     return yards
+
+
+def update_yard_sync(yard, synced_at):
+    """Record that a yard was just checked, regardless of whether any
+    new vehicles were found there."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("""
+        INSERT INTO yard_sync (yard, last_synced_at) VALUES (?, ?)
+        ON CONFLICT (yard) DO UPDATE SET last_synced_at = excluded.last_synced_at
+    """), (yard, synced_at))
+
+    conn.commit()
+    conn.close()
+
+
+def get_yard_sync_times():
+    """Return {yard: last_synced_at} for every yard we've ever checked."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT yard, last_synced_at FROM yard_sync")
+    times = dict(cursor.fetchall())
+
+    conn.close()
+
+    return times
 
 
 _EXPLORE_FILTER_SQL = """

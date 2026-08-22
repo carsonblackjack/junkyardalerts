@@ -20,6 +20,7 @@ from database.database import (
     get_user_by_email,
     get_user_by_id,
     get_watchlist,
+    get_yard_sync_times,
     remove_watchlist_item,
     search_vehicles,
     toggle_spotted,
@@ -157,6 +158,7 @@ def dashboard():
         is_admin=session.get("is_admin", False),
         search_query=search_query,
         search_results=search_results,
+        yard_sync_times=get_yard_sync_times(),
     )
 
 

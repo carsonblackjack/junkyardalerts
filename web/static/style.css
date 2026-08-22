@@ -361,6 +361,10 @@ ul li button:hover {
     color: var(--text-dim);
     padding: 3px 0;
 }
+.sync-time {
+    color: var(--steel-soft);
+    font-size: 0.8em;
+}
 
 footer, .foot-nav {
     margin-top: 40px;
