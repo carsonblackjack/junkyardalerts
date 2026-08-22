@@ -137,6 +137,14 @@ def initialize_database():
         )
     """)
 
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS search_log (
+            {id_column},
+            query TEXT NOT NULL,
+            searched_at TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -322,6 +330,96 @@ def get_all_users():
     conn.close()
 
     return users
+
+
+def log_search(query, searched_at):
+    """Record a search someone ran, for the admin analytics view. Doesn't
+    track who searched - just what, for aggregate demand data."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("INSERT INTO search_log (query, searched_at) VALUES (?, ?)"), (query, searched_at))
+
+    conn.commit()
+    conn.close()
+
+
+def get_top_searches(limit=15):
+    """Return [(query, times_searched), ...], most searched first."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("""
+        SELECT UPPER(TRIM(query)) AS normalized_query, COUNT(*) AS times_searched
+        FROM search_log
+        GROUP BY normalized_query
+        ORDER BY times_searched DESC
+        LIMIT ?
+    """), (limit,))
+    results = cursor.fetchall()
+
+    conn.close()
+
+    return results
+
+
+def get_top_watchlist_demand(limit=15):
+    """Return [(make, model, watcher_count), ...], most-watchlisted
+    make/model combos first. Blank model means "any model of this make"."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("""
+        SELECT make, model, COUNT(*) AS watcher_count
+        FROM watchlist
+        GROUP BY make, model
+        ORDER BY watcher_count DESC
+        LIMIT ?
+    """), (limit,))
+    results = cursor.fetchall()
+
+    conn.close()
+
+    return results
+
+
+def get_unmet_watchlist_demand(limit=15):
+    """Like get_top_watchlist_demand, but only make/model combos with zero
+    matching vehicles currently in inventory - what to go buy at auction."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("""
+        SELECT w.make, w.model, COUNT(*) AS watcher_count
+        FROM watchlist w
+        WHERE NOT EXISTS (
+            SELECT 1 FROM vehicles v
+            WHERE UPPER(v.make) = UPPER(w.make)
+            AND (w.model = '' OR UPPER(v.model) = UPPER(w.model))
+        )
+        GROUP BY w.make, w.model
+        ORDER BY watcher_count DESC
+        LIMIT ?
+    """), (limit,))
+    results = cursor.fetchall()
+
+    conn.close()
+
+    return results
+
+
+def get_unmet_searches(limit=15, candidates=50):
+    """Top searches that currently return zero inventory matches - people
+    keep looking for it and nobody has it, that's unmet demand. Checks the
+    top `candidates` searches and returns the first `limit` with no
+    matches, most-searched first."""
+    unmet = []
+    for query, times_searched in get_top_searches(candidates):
+        if not search_vehicles(query, limit=1):
+            unmet.append((query, times_searched))
+        if len(unmet) >= limit:
+            break
+    return unmet
 
 
 def add_watchlist_item(user_id, make, model, created_at, year_from="", year_to=""):

@@ -19,8 +19,13 @@ from database.database import (
     get_recent_vehicles,
     get_user_by_email,
     get_user_by_id,
+    get_top_searches,
+    get_top_watchlist_demand,
+    get_unmet_searches,
+    get_unmet_watchlist_demand,
     get_watchlist,
     get_yard_sync_times,
+    log_search,
     remove_watchlist_item,
     search_vehicles,
     toggle_spotted,
@@ -132,6 +137,16 @@ def logout():
     return redirect(url_for("routes.login"))
 
 
+@routes.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+
+@routes.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+
 @routes.route("/unsubscribe/<token>")
 def unsubscribe(token):
     """One click from an email, no login required - turns off every
@@ -151,7 +166,11 @@ def dashboard():
     recent_vehicles = get_recent_vehicles(20)
 
     search_query = request.args.get("q", "").strip()
-    search_results = search_vehicles(search_query) if search_query else None
+    if search_query:
+        search_results = search_vehicles(search_query)
+        log_search(search_query, datetime.now(timezone.utc).isoformat())
+    else:
+        search_results = None
 
     return render_template(
         "dashboard.html",
@@ -266,6 +285,10 @@ def admin():
         users=users,
         counts_by_yard=counts_by_yard,
         total_vehicles=total_vehicles,
+        top_searches=get_top_searches(),
+        top_watchlist_demand=get_top_watchlist_demand(),
+        unmet_searches=get_unmet_searches(),
+        unmet_watchlist_demand=get_unmet_watchlist_demand(),
     )
 
 

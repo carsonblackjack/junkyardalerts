@@ -36,4 +36,102 @@
     <p>No users yet.</p>
 {% endif %}
 
+<h3>Analytics</h3>
+<p>What people are searching for and watchlisting, most popular first.</p>
+
+<h4>What to Buy at Auction</h4>
+<p>Demand with nothing in current inventory to match it - the clearest signal of what's worth bidding on.</p>
+
+<p class="analytics-subhead">Watchlisted, but nobody has one</p>
+{% if unmet_watchlist_demand %}
+    <table>
+        <thead>
+            <tr>
+                <th>Make</th>
+                <th>Model</th>
+                <th>Watchers</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for make, model, watcher_count in unmet_watchlist_demand %}
+                <tr>
+                    <td>{{ make }}</td>
+                    <td>{{ model if model else "(any)" }}</td>
+                    <td>{{ watcher_count }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>Every watchlisted make/model has at least one match in inventory right now.</p>
+{% endif %}
+
+<p class="analytics-subhead">Searched for, but came up empty</p>
+{% if unmet_searches %}
+    <table>
+        <thead>
+            <tr>
+                <th>Search</th>
+                <th>Times Searched</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for query, times_searched in unmet_searches %}
+                <tr>
+                    <td>{{ query }}</td>
+                    <td>{{ times_searched }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No unmet searches among the top results.</p>
+{% endif %}
+
+<h4>Top Searches</h4>
+{% if top_searches %}
+    <table>
+        <thead>
+            <tr>
+                <th>Search</th>
+                <th>Times Searched</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for query, times_searched in top_searches %}
+                <tr>
+                    <td>{{ query }}</td>
+                    <td>{{ times_searched }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No searches logged yet.</p>
+{% endif %}
+
+<h4>Top Watchlist Demand</h4>
+{% if top_watchlist_demand %}
+    <table>
+        <thead>
+            <tr>
+                <th>Make</th>
+                <th>Model</th>
+                <th>Watchers</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for make, model, watcher_count in top_watchlist_demand %}
+                <tr>
+                    <td>{{ make }}</td>
+                    <td>{{ model if model else "(any)" }}</td>
+                    <td>{{ watcher_count }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No watchlist items yet.</p>
+{% endif %}
+
 {% endblock %}

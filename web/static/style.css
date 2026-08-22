@@ -365,6 +365,14 @@ ul li button:hover {
     color: var(--steel-soft);
     font-size: 0.8em;
 }
+.analytics-subhead {
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.8em;
+    color: var(--text-dim);
+    margin: 1.2em 0 0.4em;
+}
 
 footer, .foot-nav {
     margin-top: 40px;
