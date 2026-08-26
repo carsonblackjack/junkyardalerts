@@ -2,6 +2,7 @@ import os
 import re
 import secrets
 import sqlite3
+import time
 from datetime import datetime, timezone
 
 from werkzeug.security import generate_password_hash
@@ -35,9 +36,19 @@ else:
 
 
 def get_connection():
-    if USING_POSTGRES:
+    if not USING_POSTGRES:
+        return sqlite3.connect(DB_NAME)
+
+    # Render's Postgres has occasional transient connection blips - one
+    # retry after a short pause is enough to ride those out without
+    # surfacing an error page for something that fixes itself a moment
+    # later. A database that's actually down (suspended, deleted, etc.)
+    # will still fail here after the retry, same as before.
+    try:
         return psycopg2.connect(DATABASE_URL)
-    return sqlite3.connect(DB_NAME)
+    except psycopg2.OperationalError:
+        time.sleep(0.5)
+        return psycopg2.connect(DATABASE_URL)
 
 
 def _q(query):
