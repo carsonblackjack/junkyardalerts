@@ -40,7 +40,7 @@ from database.database import (
     update_first_name,
     update_notification_preferences,
 )
-from notifications.notifier import WEBSITE_URL, send_email
+from notifications.notifier import WEBSITE_URL, render_invite_email_html, send_email
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES
 from web.turnstile import TURNSTILE_SITE_KEY, verify_turnstile
@@ -390,14 +390,20 @@ def admin_invite():
 
     code = generate_invite_code_for_email(email, datetime.now(timezone.utc).isoformat())
     body = (
-        "You've been invited to try YardWatch - it checks Idaho junkyard inventory "
-        "(Jalopy Jungle and Trusty Pick-A-Part) several times a day and emails you the "
-        "moment a car, part, or year you're after shows up.\n\n"
+        "You've been invited to an exclusive beta test of YardWatch - it checks Idaho "
+        "junkyard inventory several times a day and emails you the moment a car you're "
+        "after shows up, so you don't have to keep checking yourself.\n\n"
         f"Your invite code: {code}\n\n"
         f"Sign up here: {WEBSITE_URL}/register\n"
-        "Paste that code in when you register."
+        "Paste that code in when you register.\n\n"
+        "Thanks for being part of the beta - your feedback matters more than almost "
+        "anything else right now. Good, bad, or just confusing, I want to hear it.\n\n"
+        "- Carson, Founder"
     )
-    send_email(email, "You're invited to the YardWatch beta", body)
+    send_email(
+        email, "You're invited to the YardWatch beta", body,
+        include_link_footer=False, html_body=render_invite_email_html(code),
+    )
     flash(f"Invite sent to {email}.")
     return redirect(url_for("routes.admin"))
 
