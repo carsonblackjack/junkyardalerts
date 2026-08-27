@@ -90,7 +90,7 @@ def super_admin_required(view):
 def index():
     if "user_id" in session:
         return redirect(url_for("routes.dashboard"))
-    return redirect(url_for("routes.login"))
+    return render_template("landing.html")
 
 
 @routes.route("/register", methods=["GET", "POST"])

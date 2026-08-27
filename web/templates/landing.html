@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block meta_description %}YardWatch checks Idaho junkyard inventory (Jalopy Jungle and Trusty Pick-A-Part) several times a day and emails you when a car, part, or year you're watching for shows up.{% endblock %}
+{% block content %}
+<div class="hero">
+    <h2>Stop refreshing junkyard websites.</h2>
+    <p>YardWatch checks Jalopy Jungle and Trusty Pick-A-Part inventory for you, several times a day, and emails you the moment your car, part, or year shows up.</p>
+    <div class="hero-actions">
+        <a href="{{ url_for('routes.register') }}" class="cta-button cta-button-lg">Sign Up Free</a>
+        <a href="{{ url_for('routes.login') }}" class="secondary">Already have an account? Log in</a>
+    </div>
+</div>
+{% endblock %}
