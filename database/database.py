@@ -169,6 +169,15 @@ def initialize_database():
         )
     """)
 
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS login_log (
+            {id_column},
+            user_id INTEGER NOT NULL,
+            logged_in_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+
     cursor.execute(_q("UPDATE users SET is_super_admin = 1 WHERE email = ?"), (OWNER_EMAIL,))
 
     cursor.execute(_q("SELECT id FROM users WHERE email = ?"), (MASTER_ADMIN_EMAIL,))
@@ -343,6 +352,32 @@ def get_users_for_notifications():
     conn.close()
 
     return users
+
+
+def log_login(user_id, logged_in_at):
+    """Record a successful login, so the weekly digest can tell who's
+    actually been using the site this week."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("INSERT INTO login_log (user_id, logged_in_at) VALUES (?, ?)"), (user_id, logged_in_at))
+
+    conn.commit()
+    conn.close()
+
+
+def get_active_user_ids_since(cutoff):
+    """Return the set of user ids with at least one login at or after
+    `cutoff` (an ISO timestamp string)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("SELECT DISTINCT user_id FROM login_log WHERE logged_in_at >= ?"), (cutoff,))
+    user_ids = {row[0] for row in cursor.fetchall()}
+
+    conn.close()
+
+    return user_ids
 
 
 def unsubscribe_by_token(token):

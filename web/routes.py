@@ -26,6 +26,7 @@ from database.database import (
     get_unmet_watchlist_demand,
     get_watchlist,
     get_yard_sync_times,
+    log_login,
     log_search,
     remove_watchlist_item,
     search_vehicles,
@@ -147,6 +148,7 @@ def login():
         session["is_admin"] = bool(user[4])
         session["first_name"] = user[8]
         session["is_super_admin"] = bool(user[9])
+        log_login(user[0], datetime.now(timezone.utc).isoformat())
         return redirect(url_for("routes.dashboard"))
 
     return render_template("login.html", turnstile_site_key=TURNSTILE_SITE_KEY)
@@ -166,6 +168,12 @@ def terms():
 @routes.route("/eula")
 def eula():
     return render_template("eula.html")
+
+
+@routes.route("/feedback")
+@login_required
+def feedback():
+    return render_template("feedback.html")
 
 
 @routes.route("/privacy")

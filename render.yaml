@@ -76,3 +76,25 @@ services:
         fromDatabase:
           name: yardwatch-db
           property: connectionString
+
+  - type: cron
+    name: yardwatch-weekly-digest
+    runtime: python
+    plan: starter
+    # 3pm UTC = 9am Mountain Time (UTC-6, MDT). See note above about DST.
+    schedule: "0 15 * * 1"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python weekly_digest.py
+    envVars:
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: ALERT_EMAIL_FROM
+        sync: false
+      - key: ALERT_EMAIL_TO
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: yardwatch-db
+          property: connectionString
