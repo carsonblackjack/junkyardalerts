@@ -182,10 +182,19 @@ def initialize_database():
         CREATE TABLE IF NOT EXISTS invite_codes (
             code TEXT PRIMARY KEY,
             created_at TEXT NOT NULL,
+            sent_to_email TEXT,
             used_by_email TEXT,
             used_at TEXT
         )
     """)
+
+    if USING_POSTGRES:
+        cursor.execute("ALTER TABLE invite_codes ADD COLUMN IF NOT EXISTS sent_to_email TEXT")
+    else:
+        try:
+            cursor.execute("ALTER TABLE invite_codes ADD COLUMN sent_to_email TEXT")
+        except sqlite3.OperationalError:
+            pass  # already has the column
 
     cursor.execute(_q("UPDATE users SET is_super_admin = 1 WHERE email = ?"), (OWNER_EMAIL,))
 
@@ -298,6 +307,31 @@ def generate_invite_codes(count, created_at):
     return codes
 
 
+def generate_invite_code_for_email(email, created_at):
+    """Create one invite code earmarked for a specific email address (so
+    the admin panel can show who it was actually sent to), and return the
+    code so it can be emailed to them."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    while True:
+        code = "".join(secrets.choice(INVITE_CODE_CHARS) for _ in range(8))
+        try:
+            cursor.execute(
+                _q("INSERT INTO invite_codes (code, created_at, sent_to_email) VALUES (?, ?, ?)"),
+                (code, created_at, email),
+            )
+            break
+        except IntegrityError:
+            conn.rollback()
+            continue  # collision - vanishingly unlikely, just try another
+
+    conn.commit()
+    conn.close()
+
+    return code
+
+
 def redeem_invite_code(code, email, used_at):
     """Mark an invite code as used by this email. Returns True if the
     code existed and hadn't been used yet, False otherwise. The
@@ -321,11 +355,15 @@ def redeem_invite_code(code, email, used_at):
 
 def get_invite_codes():
     """Return every invite code for the admin panel:
-    [(code, created_at, used_by_email, used_at), ...], newest first."""
+    [(code, created_at, sent_to_email, used_by_email, used_at), ...],
+    newest first."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT code, created_at, used_by_email, used_at FROM invite_codes ORDER BY created_at DESC")
+    cursor.execute("""
+        SELECT code, created_at, sent_to_email, used_by_email, used_at
+        FROM invite_codes ORDER BY created_at DESC
+    """)
     codes = cursor.fetchall()
 
     conn.close()

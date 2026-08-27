@@ -57,26 +57,41 @@
 {% if viewer_is_super_admin %}
     <h3>Invite Codes</h3>
     <p>Registration requires one of these during the beta. Each code works once.</p>
+
+    <h4>Invite Someone by Email</h4>
+    <p>Generates a code and emails it to them directly, with a link to sign up.</p>
+    <form method="post" action="{{ url_for('routes.admin_invite') }}">
+        <label>Email
+            <input type="email" name="email" required>
+        </label>
+        <button type="submit">Send Invite</button>
+    </form>
+
+    <h4>Generate a Batch</h4>
+    <p>For handing out codes yourself (text, in person, etc.) without emailing them.</p>
     <form method="post" action="{{ url_for('routes.admin_generate_codes') }}">
         <label>How Many
             <input type="number" name="count" min="1" max="100" value="10">
         </label>
         <button type="submit">Generate Codes</button>
     </form>
+
     {% if invite_codes %}
         <table>
             <thead>
                 <tr>
                     <th>Code</th>
                     <th>Created</th>
+                    <th>Sent To</th>
                     <th>Status</th>
                 </tr>
             </thead>
             <tbody>
-                {% for code, created_at, used_by_email, used_at in invite_codes %}
+                {% for code, created_at, sent_to_email, used_by_email, used_at in invite_codes %}
                     <tr>
                         <td class="mono">{{ code }}</td>
                         <td>{{ created_at|us_date }}</td>
+                        <td>{{ sent_to_email or "-" }}</td>
                         <td>{% if used_by_email %}Used by {{ used_by_email }}{% else %}Unused{% endif %}</td>
                     </tr>
                 {% endfor %}

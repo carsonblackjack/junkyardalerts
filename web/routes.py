@@ -9,6 +9,7 @@ from database.database import (
     add_watchlist_item,
     create_user,
     delete_user_account,
+    generate_invite_code_for_email,
     generate_invite_codes,
     get_all_users,
     get_invite_codes,
@@ -39,6 +40,7 @@ from database.database import (
     update_first_name,
     update_notification_preferences,
 )
+from notifications.notifier import WEBSITE_URL, send_email
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES
 from web.turnstile import TURNSTILE_SITE_KEY, verify_turnstile
@@ -375,6 +377,28 @@ def admin_generate_codes():
     count = request.form.get("count", type=int) or 0
     count = max(min(count, 100), 1)
     generate_invite_codes(count, datetime.now(timezone.utc).isoformat())
+    return redirect(url_for("routes.admin"))
+
+
+@routes.route("/admin/invite", methods=["POST"])
+@super_admin_required
+def admin_invite():
+    email = request.form.get("email", "").strip().lower()
+    if not email:
+        flash("Enter an email to send an invite.")
+        return redirect(url_for("routes.admin"))
+
+    code = generate_invite_code_for_email(email, datetime.now(timezone.utc).isoformat())
+    body = (
+        "You've been invited to try YardWatch - it checks Idaho junkyard inventory "
+        "(Jalopy Jungle and Trusty Pick-A-Part) several times a day and emails you the "
+        "moment a car, part, or year you're after shows up.\n\n"
+        f"Your invite code: {code}\n\n"
+        f"Sign up here: {WEBSITE_URL}/register\n"
+        "Paste that code in when you register."
+    )
+    send_email(email, "You're invited to the YardWatch beta", body)
+    flash(f"Invite sent to {email}.")
     return redirect(url_for("routes.admin"))
 
 
