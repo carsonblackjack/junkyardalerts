@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Something Broke</h2>
+<p>That wasn't supposed to happen. It's usually temporary - give it another try.</p>
+<p>
+    <button onclick="window.location.reload()">Try Again</button>
+    <a href="{{ url_for('routes.dashboard') }}">Back to your dashboard</a>
+</p>
+{% endblock %}

@@ -8,6 +8,7 @@ from database.database import (
     SPOTTED_EXPIRY_DAYS,
     add_watchlist_item,
     create_user,
+    delete_user_account,
     get_all_users,
     get_distinct_models_for_make,
     get_distinct_yards,
@@ -107,6 +108,10 @@ def register():
             flash("Email and password are required.")
             return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
+        if "agree_to_terms" not in request.form:
+            flash("You need to agree to the Terms of Service and Privacy Policy to sign up.")
+            return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
+
         password_hash = generate_password_hash(password)
         created = create_user(email, password_hash, datetime.now(timezone.utc).isoformat(), first_name)
 
@@ -156,6 +161,11 @@ def logout():
 @routes.route("/terms")
 def terms():
     return render_template("terms.html")
+
+
+@routes.route("/eula")
+def eula():
+    return render_template("eula.html")
 
 
 @routes.route("/privacy")
@@ -234,6 +244,19 @@ def settings():
         notify_recently_found=bool(user[3]),
         notify_watchlist_matches=bool(user[4]),
     )
+
+
+@routes.route("/account/delete", methods=["POST"])
+@login_required
+def account_delete():
+    if session.get("is_super_admin"):
+        flash("Admin accounts can't be deleted this way - contact yardwatchadmin@gmail.com.")
+        return redirect(url_for("routes.settings"))
+
+    delete_user_account(session["user_id"])
+    session.clear()
+    flash("Your account and all its data have been deleted.")
+    return redirect(url_for("routes.login"))
 
 
 EXPLORE_PAGE_SIZE = 200

@@ -24,4 +24,10 @@
 
     <button type="submit">Save</button>
 </form>
+
+<h3>Delete Account</h3>
+<p>This permanently deletes your account, your watchlist, and your spotted marks. There's no undoing it.</p>
+<form method="post" action="{{ url_for('routes.account_delete') }}" onsubmit="return confirm('Permanently delete your YardWatch account? This can\'t be undone.');">
+    <button type="submit">Delete My Account</button>
+</form>
 {% endblock %}

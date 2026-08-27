@@ -12,6 +12,10 @@
     <label>Password
         <input type="password" name="password" required>
     </label>
+    <label class="checkbox-row">
+        <input type="checkbox" name="agree_to_terms" required>
+        I agree to the <a href="{{ url_for('routes.terms') }}" target="_blank">Terms of Service</a> and <a href="{{ url_for('routes.privacy') }}" target="_blank">Privacy Policy</a>
+    </label>
     <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
     <button type="submit">Sign Up</button>
 </form>

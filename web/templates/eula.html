@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>End User License Agreement</h2>
+<p class="sync-time">Last updated: August 26, 2026</p>
+
+<p>This covers your right to use the YardWatch software itself, separate from the account/conduct rules in the <a href="{{ url_for('routes.terms') }}">Terms of Service</a>.</p>
+
+<h3>License Grant</h3>
+<p>We give you a personal, non-exclusive, non-transferable license to use YardWatch to search junkyard inventory and manage your own watchlist. That's it - it's not a license to resell, sublicense, or build a competing product on top of it.</p>
+
+<h3>What You Can't Do</h3>
+<ul>
+    <li>Scrape, copy, or bulk-download YardWatch's inventory data for your own use elsewhere.</li>
+    <li>Reverse-engineer, decompile, or try to extract the source code.</li>
+    <li>Use automated tools to access the site outside of normal browsing.</li>
+</ul>
+
+<h3>Ownership</h3>
+<p>YardWatch (the software, design, and brand) belongs to us. The underlying vehicle inventory data belongs to the yards it comes from (Jalopy Jungle and Trusty Pick-A-Part) - we just organize it for you to search.</p>
+
+<h3>License Ends If...</h3>
+<p>This license ends automatically if you violate these terms, or when you delete your account.</p>
+
+<h3>Questions</h3>
+<p>Reach out to <a href="mailto:yardwatchadmin@gmail.com">yardwatchadmin@gmail.com</a>.</p>
+{% endblock %}

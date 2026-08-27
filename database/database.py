@@ -246,6 +246,21 @@ def create_user(email, password_hash, created_at, first_name=""):
     return created
 
 
+def delete_user_account(user_id):
+    """Permanently delete a user and everything tied to their account -
+    watchlist, spotted marks, and the account itself. Doesn't touch
+    search_log, since that's never linked to a user in the first place."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("DELETE FROM watchlist WHERE user_id = ?"), (user_id,))
+    cursor.execute(_q("DELETE FROM spotted WHERE user_id = ?"), (user_id,))
+    cursor.execute(_q("DELETE FROM users WHERE id = ? AND is_super_admin = 0"), (user_id,))
+
+    conn.commit()
+    conn.close()
+
+
 def get_user_by_email(email):
     """Return (id, email, password_hash, created_at, is_admin,
     notify_daily_summary, notify_recently_found, notify_watchlist_matches,

@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{% block meta_description %}YardWatch checks Idaho junkyard inventory (Jalopy Jungle and Trusty Pick-A-Part) several times a day and emails you when a car, part, or year you're watching for shows up.{% endblock %}">
     <title>YardWatch</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -45,6 +47,7 @@
     </main>
     <footer class="foot-nav">
         <a href="{{ url_for('routes.terms') }}">Terms of Service</a>
+        <a href="{{ url_for('routes.eula') }}">EULA</a>
         <a href="{{ url_for('routes.privacy') }}">Privacy Policy</a>
     </footer>
 </body>

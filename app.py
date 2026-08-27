@@ -1,6 +1,16 @@
+import os
 import sys
 import time
 from datetime import date, datetime, timedelta, timezone
+
+import sentry_sdk
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+if SENTRY_DSN:
+    sentry_sdk.init(dsn=SENTRY_DSN, send_default_pii=False)
 
 from database.database import (
     SPOTTED_EXPIRY_DAYS,

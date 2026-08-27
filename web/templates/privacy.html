@@ -1,9 +1,27 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Privacy Policy</h2>
-<p class="sync-time">Last updated: August 22, 2026</p>
+<p class="sync-time">Last updated: August 26, 2026</p>
 
 <p>We're not lawyers - this is a plain explanation of what data YardWatch collects and what happens to it.</p>
+
+<h3>At a Glance</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Collected?</th>
+            <th>Shared With</th>
+            <th>Sold?</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td>Email &amp; password</td><td>Yes</td><td>SendGrid (to send your alert emails)</td><td>No</td></tr>
+        <tr><td>Watchlist &amp; spotted marks</td><td>Yes</td><td>Nobody - shown as aggregate counts only</td><td>No</td></tr>
+        <tr><td>Search terms</td><td>Yes, not linked to you</td><td>Nobody - aggregate counts only</td><td>No</td></tr>
+        <tr><td>Crash reports</td><td>Only when something breaks</td><td>Sentry (helps us fix bugs)</td><td>No</td></tr>
+    </tbody>
+</table>
 
 <h3>What We Collect</h3>
 <ul>
@@ -24,6 +42,7 @@
     <li><strong>SendGrid</strong> - sends the alert emails.</li>
     <li><strong>Cloudflare</strong> - handles our domain and the security check on the login/signup pages.</li>
     <li><strong>Render</strong> - hosts the website and the database.</li>
+    <li><strong>Sentry</strong> - tells us when something on the site breaks, so we can fix it. It only sees data related to the error itself, not your personal info.</li>
 </ul>
 <p>We don't sell your personal information to advertisers or anyone else. If YardWatch is ever sold or transferred to a new owner, account data would transfer with it, still covered by this policy or one just as protective.</p>
 
@@ -32,6 +51,9 @@
 
 <h3>Your Choices</h3>
 <p>You can turn off any or all email types from your Settings page, or use the one-click unsubscribe link at the bottom of any email. To delete your account or request a copy of your data, email <a href="mailto:yardwatchadmin@gmail.com">yardwatchadmin@gmail.com</a>.</p>
+
+<h3>Built With AI</h3>
+<p>YardWatch's code was built with the help of AI coding tools. No AI is involved in deciding what shows up in your alerts or search results - that's plain, predictable matching against what the yards actually have listed.</p>
 
 <h3>Kids</h3>
 <p>YardWatch isn't intended for anyone under 13, and we don't knowingly collect data from kids.</p>
