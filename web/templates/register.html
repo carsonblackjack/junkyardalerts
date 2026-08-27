@@ -1,8 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Sign Up</h2>
+<p>YardWatch is in beta - you'll need an invite code to sign up.</p>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <form method="post">
+    <label>Invite Code
+        <input type="text" name="invite_code" required>
+    </label>
     <label>First Name (optional)
         <input type="text" name="first_name" placeholder="What should we call you?">
     </label>

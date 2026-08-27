@@ -178,6 +178,15 @@ def initialize_database():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS invite_codes (
+            code TEXT PRIMARY KEY,
+            created_at TEXT NOT NULL,
+            used_by_email TEXT,
+            used_at TEXT
+        )
+    """)
+
     cursor.execute(_q("UPDATE users SET is_super_admin = 1 WHERE email = ?"), (OWNER_EMAIL,))
 
     cursor.execute(_q("SELECT id FROM users WHERE email = ?"), (MASTER_ADMIN_EMAIL,))
@@ -234,25 +243,94 @@ def save_vehicle(year, make, model, row_location, yard, date_found):
 
 
 def create_user(email, password_hash, created_at, first_name=""):
-    """Add a new user. Returns True if created, False if that email is
-    already taken (email must be unique)."""
+    """Add a new user. Returns the new user's id, or None if that email
+    is already taken (email must be unique)."""
     conn = get_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute(_q("""
-            INSERT INTO users (email, password_hash, created_at, first_name, unsubscribe_token)
-            VALUES (?, ?, ?, ?, ?)
-        """), (email, password_hash, created_at, first_name, secrets.token_urlsafe(32)))
+        if USING_POSTGRES:
+            cursor.execute(_q("""
+                INSERT INTO users (email, password_hash, created_at, first_name, unsubscribe_token)
+                VALUES (?, ?, ?, ?, ?) RETURNING id
+            """), (email, password_hash, created_at, first_name, secrets.token_urlsafe(32)))
+            user_id = cursor.fetchone()[0]
+        else:
+            cursor.execute(_q("""
+                INSERT INTO users (email, password_hash, created_at, first_name, unsubscribe_token)
+                VALUES (?, ?, ?, ?, ?)
+            """), (email, password_hash, created_at, first_name, secrets.token_urlsafe(32)))
+            user_id = cursor.lastrowid
         conn.commit()
-        created = True
     except IntegrityError:
         conn.rollback()
-        created = False
+        user_id = None
 
     conn.close()
 
-    return created
+    return user_id
+
+
+# Excludes visually ambiguous characters (0/O, 1/I/L) so codes are easy
+# to read and type when shared by text or out loud.
+INVITE_CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+
+
+def generate_invite_codes(count, created_at):
+    """Create `count` new unused invite codes and return the list of
+    codes generated."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    codes = []
+    while len(codes) < count:
+        code = "".join(secrets.choice(INVITE_CODE_CHARS) for _ in range(8))
+        try:
+            cursor.execute(_q("INSERT INTO invite_codes (code, created_at) VALUES (?, ?)"), (code, created_at))
+            codes.append(code)
+        except IntegrityError:
+            conn.rollback()
+            continue  # collision - vanishingly unlikely, just try another
+
+    conn.commit()
+    conn.close()
+
+    return codes
+
+
+def redeem_invite_code(code, email, used_at):
+    """Mark an invite code as used by this email. Returns True if the
+    code existed and hadn't been used yet, False otherwise. The
+    used_by_email IS NULL check makes this safe even if two people
+    somehow submit the same code at the same moment."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("""
+        UPDATE invite_codes SET used_by_email = ?, used_at = ?
+        WHERE code = ? AND used_by_email IS NULL
+    """), (email, used_at, code))
+
+    redeemed = cursor.rowcount > 0
+
+    conn.commit()
+    conn.close()
+
+    return redeemed
+
+
+def get_invite_codes():
+    """Return every invite code for the admin panel:
+    [(code, created_at, used_by_email, used_at), ...], newest first."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT code, created_at, used_by_email, used_at FROM invite_codes ORDER BY created_at DESC")
+    codes = cursor.fetchall()
+
+    conn.close()
+
+    return codes
 
 
 def delete_user_account(user_id):

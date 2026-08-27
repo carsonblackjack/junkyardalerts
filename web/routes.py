@@ -9,7 +9,9 @@ from database.database import (
     add_watchlist_item,
     create_user,
     delete_user_account,
+    generate_invite_codes,
     get_all_users,
+    get_invite_codes,
     get_distinct_models_for_make,
     get_distinct_yards,
     get_distinct_years,
@@ -28,6 +30,7 @@ from database.database import (
     get_yard_sync_times,
     log_login,
     log_search,
+    redeem_invite_code,
     remove_watchlist_item,
     search_vehicles,
     set_admin_status,
@@ -104,6 +107,7 @@ def register():
         email = request.form["email"].strip().lower()
         password = request.form["password"]
         first_name = request.form.get("first_name", "").strip()
+        invite_code = request.form.get("invite_code", "").strip().upper()
 
         if not email or not password:
             flash("Email and password are required.")
@@ -113,11 +117,20 @@ def register():
             flash("You need to agree to the Terms of Service and Privacy Policy to sign up.")
             return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
-        password_hash = generate_password_hash(password)
-        created = create_user(email, password_hash, datetime.now(timezone.utc).isoformat(), first_name)
+        if not invite_code:
+            flash("An invite code is required to sign up during the beta.")
+            return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
-        if not created:
+        password_hash = generate_password_hash(password)
+        user_id = create_user(email, password_hash, datetime.now(timezone.utc).isoformat(), first_name)
+
+        if not user_id:
             flash("An account with that email already exists.")
+            return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
+
+        if not redeem_invite_code(invite_code, email, datetime.now(timezone.utc).isoformat()):
+            delete_user_account(user_id)
+            flash("That invite code isn't valid or has already been used.")
             return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
         flash("Account created! Please log in.")
@@ -342,6 +355,7 @@ def admin():
             top_watchlist_demand=get_top_watchlist_demand(),
             unmet_searches=get_unmet_searches(),
             unmet_watchlist_demand=get_unmet_watchlist_demand(),
+            invite_codes=get_invite_codes(),
         )
 
     return render_template("admin.html", **context)
@@ -352,6 +366,15 @@ def admin():
 def admin_set_admin(user_id):
     make_admin = request.form.get("make_admin") == "1"
     set_admin_status(user_id, make_admin)
+    return redirect(url_for("routes.admin"))
+
+
+@routes.route("/admin/generate-codes", methods=["POST"])
+@super_admin_required
+def admin_generate_codes():
+    count = request.form.get("count", type=int) or 0
+    count = max(min(count, 100), 1)
+    generate_invite_codes(count, datetime.now(timezone.utc).isoformat())
     return redirect(url_for("routes.admin"))
 
 
