@@ -197,6 +197,24 @@ h2 { font-size: 30px; margin: 28px 0 6px; }
 h3 { font-size: 24px; margin: 32px 0 10px; }
 h4 { font-size: 19px; margin: 20px 0 8px; }
 
+.auth-card {
+    max-width: 400px;
+    margin: 32px auto 0;
+    padding: 32px 30px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+}
+.auth-card h2 { margin-top: 0; }
+.auth-lede {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    margin: -2px 0 22px;
+}
+.auth-card form.stack,
+.auth-card form { max-width: none; }
+.auth-card p:last-child { margin-bottom: 0; }
+
 form {
     display: flex;
     flex-wrap: wrap;

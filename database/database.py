@@ -196,6 +196,16 @@ def initialize_database():
         except sqlite3.OperationalError:
             pass  # already has the column
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            used_at TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+
     cursor.execute(_q("UPDATE users SET is_super_admin = 1 WHERE email = ?"), (OWNER_EMAIL,))
 
     cursor.execute(_q("SELECT id FROM users WHERE email = ?"), (MASTER_ADMIN_EMAIL,))
@@ -449,6 +459,73 @@ def update_first_name(user_id, first_name):
 
     conn.commit()
     conn.close()
+
+
+def update_password_hash(user_id, password_hash):
+    """Set a new password hash for a user."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("UPDATE users SET password_hash = ? WHERE id = ?"), (password_hash, user_id))
+
+    conn.commit()
+    conn.close()
+
+
+def create_password_reset_token(user_id, created_at):
+    """Create a new one-time password reset token for a user and return
+    it, so it can be emailed to them."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    token = secrets.token_urlsafe(32)
+    cursor.execute(
+        _q("INSERT INTO password_reset_tokens (token, user_id, created_at) VALUES (?, ?, ?)"),
+        (token, user_id, created_at),
+    )
+
+    conn.commit()
+    conn.close()
+
+    return token
+
+
+def get_valid_reset_token_user(token, cutoff):
+    """Return the user_id for this token if it exists, hasn't been used,
+    and was created at or after `cutoff` (an ISO timestamp string) - or
+    None if the token is invalid, used, or expired."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("""
+        SELECT user_id FROM password_reset_tokens
+        WHERE token = ? AND used_at IS NULL AND created_at >= ?
+    """), (token, cutoff))
+    row = cursor.fetchone()
+
+    conn.close()
+
+    return row[0] if row else None
+
+
+def use_reset_token(token, used_at):
+    """Mark a reset token as used. Returns True if it was successfully
+    claimed (existed and wasn't already used), False otherwise - safe
+    even if two requests try to use the same token at once."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("""
+        UPDATE password_reset_tokens SET used_at = ?
+        WHERE token = ? AND used_at IS NULL
+    """), (used_at, token))
+
+    claimed = cursor.rowcount > 0
+
+    conn.commit()
+    conn.close()
+
+    return claimed
 
 
 def get_users_for_notifications():

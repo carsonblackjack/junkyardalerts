@@ -25,6 +25,20 @@
     <button type="submit">Save</button>
 </form>
 
+<h3>Change Password</h3>
+<form method="post" action="{{ url_for('routes.change_password') }}" class="stack">
+    <label>Current Password
+        <input type="password" name="current_password" required>
+    </label>
+    <label>New Password
+        <input type="password" name="new_password" required>
+    </label>
+    <label>Confirm New Password
+        <input type="password" name="confirm_new_password" required>
+    </label>
+    <button type="submit">Update Password</button>
+</form>
+
 <h3>Delete Account</h3>
 <p>This permanently deletes your account, your watchlist, and your spotted marks. There's no undoing it.</p>
 <form method="post" action="{{ url_for('routes.account_delete') }}" onsubmit="return confirm('Permanently delete your YardWatch account? This can\'t be undone.');">

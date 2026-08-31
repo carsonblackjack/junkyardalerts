@@ -7,6 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from database.database import (
     SPOTTED_EXPIRY_DAYS,
     add_watchlist_item,
+    create_password_reset_token,
     create_user,
     delete_user_account,
     generate_invite_code_for_email,
@@ -27,6 +28,7 @@ from database.database import (
     get_top_watchlist_demand,
     get_unmet_searches,
     get_unmet_watchlist_demand,
+    get_valid_reset_token_user,
     get_watchlist,
     get_yard_sync_times,
     log_login,
@@ -39,6 +41,8 @@ from database.database import (
     unsubscribe_by_token,
     update_first_name,
     update_notification_preferences,
+    update_password_hash,
+    use_reset_token,
 )
 from notifications.notifier import WEBSITE_URL, render_invite_email_html, send_email
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES
@@ -169,6 +173,66 @@ def login():
     return render_template("login.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
 
+RESET_TOKEN_LIFETIME = timedelta(hours=1)
+
+
+@routes.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        if not verify_turnstile(request.form.get("cf-turnstile-response"), request.remote_addr):
+            flash("Please complete the security check and try again.")
+            return render_template("forgot_password.html", turnstile_site_key=TURNSTILE_SITE_KEY)
+
+        email = request.form.get("email", "").strip().lower()
+        user = get_user_by_email(email)
+
+        if user:
+            token = create_password_reset_token(user[0], datetime.now(timezone.utc).isoformat())
+            reset_url = f"{WEBSITE_URL}/reset-password/{token}"
+            body = (
+                "Someone (hopefully you) asked to reset the password on your YardWatch account.\n\n"
+                f"Reset it here: {reset_url}\n\n"
+                "This link works once and expires in an hour. If you didn't request this, you can "
+                "safely ignore this email - your password won't change unless you use the link above."
+            )
+            send_email(email, "Reset your YardWatch password", body, include_link_footer=False)
+
+        # Same message whether or not the email matched an account, so this
+        # can't be used to check which emails are registered.
+        flash("If that email is registered, we've sent a link to reset your password.")
+        return redirect(url_for("routes.login"))
+
+    return render_template("forgot_password.html", turnstile_site_key=TURNSTILE_SITE_KEY)
+
+
+@routes.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    cutoff = (datetime.now(timezone.utc) - RESET_TOKEN_LIFETIME).isoformat()
+    user_id = get_valid_reset_token_user(token, cutoff)
+
+    if request.method == "POST":
+        if not user_id:
+            flash("That reset link is invalid or has expired.")
+            return render_template("reset_password.html", valid=False)
+
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not password or password != confirm_password:
+            flash("Passwords must match and can't be blank.")
+            return render_template("reset_password.html", valid=True)
+
+        if not use_reset_token(token, datetime.now(timezone.utc).isoformat()):
+            flash("That reset link was already used.")
+            return render_template("reset_password.html", valid=False)
+
+        update_password_hash(user_id, generate_password_hash(password))
+        flash("Password updated. Please log in.")
+        return redirect(url_for("routes.login"))
+
+    return render_template("reset_password.html", valid=bool(user_id))
+
+
 @routes.route("/logout")
 def logout():
     session.clear()
@@ -267,6 +331,25 @@ def settings():
         notify_recently_found=bool(user[3]),
         notify_watchlist_matches=bool(user[4]),
     )
+
+
+@routes.route("/settings/change-password", methods=["POST"])
+@login_required
+def change_password():
+    user = get_user_by_email(session["user_email"])
+    current_password = request.form.get("current_password", "")
+    new_password = request.form.get("new_password", "")
+    confirm_new_password = request.form.get("confirm_new_password", "")
+
+    if not check_password_hash(user[2], current_password):
+        flash("Current password is incorrect.")
+    elif not new_password or new_password != confirm_new_password:
+        flash("New passwords must match and can't be blank.")
+    else:
+        update_password_hash(user[0], generate_password_hash(new_password))
+        flash("Password updated.")
+
+    return redirect(url_for("routes.settings"))
 
 
 @routes.route("/account/delete", methods=["POST"])
