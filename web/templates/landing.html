@@ -1,12 +1,41 @@
 {% extends "base.html" %}
-{% block meta_description %}YardWatch checks Idaho junkyard inventory (Jalopy Jungle and Trusty Pick-A-Part) several times a day and emails you when a car, part, or year you're watching for shows up.{% endblock %}
+{% block meta_description %}YardWatch checks Idaho junkyard inventory several times a day and emails you when a car you're watching for shows up.{% endblock %}
 {% block content %}
 <div class="hero">
+    <p class="eyebrow">Exclusive Beta</p>
     <h2>Stop refreshing junkyard websites.</h2>
-    <p>YardWatch checks Jalopy Jungle and Trusty Pick-A-Part inventory for you, several times a day, and emails you the moment your car, part, or year shows up.</p>
+    <p>YardWatch checks Idaho junkyard inventory for you, several times a day, and emails you the moment a car you're after shows up.</p>
     <div class="hero-actions">
         <a href="{{ url_for('routes.register') }}" class="cta-button cta-button-lg">Sign Up Free</a>
         <a href="{{ url_for('routes.login') }}" class="secondary">Already have an account? Log in</a>
     </div>
+    <p class="hero-live"><span class="dot"></span>Tracking {{ "{:,}".format(total_vehicles) }} vehicles across {{ yard_count }} yards right now</p>
+</div>
+
+<div class="section-stripe"></div>
+
+<h3>How It Works</h3>
+<div class="steps">
+    <div class="step">
+        <div class="step-num">01</div>
+        <h4>Search or Watch</h4>
+        <p>Search live inventory, or save a make, model, and year range you're after.</p>
+    </div>
+    <div class="step">
+        <div class="step-num">02</div>
+        <h4>We Check For You</h4>
+        <p>YardWatch checks every yard several times a day, so you don't have to.</p>
+    </div>
+    <div class="step">
+        <div class="step-num">03</div>
+        <h4>Get Emailed</h4>
+        <p>The moment a match shows up, it's in your inbox - not buried in a page refresh.</p>
+    </div>
+</div>
+
+<div class="stat-tiles">
+    <div class="stat-tile"><span class="stat-value">{{ "{:,}".format(total_vehicles) }}</span><span class="stat-label">vehicles tracked</span></div>
+    <div class="stat-tile"><span class="stat-value">{{ yard_count }}</span><span class="stat-label">Idaho yards checked</span></div>
+    <div class="stat-tile"><span class="stat-value">4&times;</span><span class="stat-label">daily inventory checks</span></div>
 </div>
 {% endblock %}

@@ -100,7 +100,15 @@ def super_admin_required(view):
 def index():
     if "user_id" in session:
         return redirect(url_for("routes.dashboard"))
-    return render_template("landing.html")
+
+    counts_by_yard = get_inventory_counts_by_yard()
+    total_vehicles = sum(count for _, count in counts_by_yard)
+
+    return render_template(
+        "landing.html",
+        total_vehicles=total_vehicles,
+        yard_count=len(counts_by_yard),
+    )
 
 
 @routes.route("/register", methods=["GET", "POST"])
