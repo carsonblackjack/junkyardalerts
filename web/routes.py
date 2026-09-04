@@ -44,7 +44,7 @@ from database.database import (
     update_password_hash,
     use_reset_token,
 )
-from notifications.notifier import WEBSITE_URL, render_invite_email_html, send_email
+from notifications.notifier import ALERT_EMAIL_TO, WEBSITE_URL, render_invite_email_html, send_email
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES
 from web.turnstile import TURNSTILE_SITE_KEY, verify_turnstile
@@ -146,6 +146,13 @@ def register():
             delete_user_account(user_id)
             flash("That invite code isn't valid or has already been used.")
             return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
+
+        if ALERT_EMAIL_TO:
+            send_email(
+                ALERT_EMAIL_TO, "New YardWatch signup",
+                f"{email} just signed up" + (f" ({first_name})" if first_name else "") + f", using invite code {invite_code}.",
+                include_link_footer=False,
+            )
 
         flash("Account created! Please log in.")
         return redirect(url_for("routes.login"))
@@ -373,7 +380,7 @@ def account_delete():
     return redirect(url_for("routes.login"))
 
 
-EXPLORE_PAGE_SIZE = 200
+EXPLORE_PAGE_SIZE = 50
 
 
 @routes.route("/explore")

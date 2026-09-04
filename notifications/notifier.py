@@ -7,6 +7,7 @@ load_dotenv()
 
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 ALERT_EMAIL_FROM = os.getenv("ALERT_EMAIL_FROM")
+ALERT_EMAIL_TO = os.getenv("ALERT_EMAIL_TO")
 
 SENDGRID_URL = "https://api.sendgrid.com/v3/mail/send"
 WEBSITE_URL = "https://yard-watch.com"
