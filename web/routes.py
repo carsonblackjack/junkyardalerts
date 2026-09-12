@@ -42,6 +42,7 @@ from database.database import (
     update_first_name,
     update_notification_preferences,
     update_password_hash,
+    update_preferred_yards,
     use_reset_token,
 )
 from notifications.notifier import ALERT_EMAIL_TO, WEBSITE_URL, render_invite_email_html, send_email
@@ -334,10 +335,12 @@ def settings():
             recently_found="notify_recently_found" in request.form,
             watchlist_matches="notify_watchlist_matches" in request.form,
         )
+        update_preferred_yards(user_id, request.form.getlist("preferred_yards"))
         flash("Preferences saved.")
         return redirect(url_for("routes.settings"))
 
     user = get_user_by_id(user_id)
+    preferred_yards = user[6].split(",") if user[6] else []
     return render_template(
         "settings.html",
         email=session.get("user_email"),
@@ -345,6 +348,8 @@ def settings():
         notify_daily_summary=bool(user[2]),
         notify_recently_found=bool(user[3]),
         notify_watchlist_matches=bool(user[4]),
+        all_yards=get_distinct_yards(),
+        preferred_yards=preferred_yards,
     )
 
 

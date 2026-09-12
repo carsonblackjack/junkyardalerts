@@ -88,7 +88,8 @@ def initialize_database():
             notify_recently_found INTEGER NOT NULL DEFAULT 1,
             notify_watchlist_matches INTEGER NOT NULL DEFAULT 1,
             first_name TEXT NOT NULL DEFAULT '',
-            unsubscribe_token TEXT NOT NULL DEFAULT ''
+            unsubscribe_token TEXT NOT NULL DEFAULT '',
+            preferred_yards TEXT NOT NULL DEFAULT ''
         )
     """)
 
@@ -100,6 +101,7 @@ def initialize_database():
         ("notify_watchlist_matches", "INTEGER NOT NULL DEFAULT 1"),
         ("first_name", "TEXT NOT NULL DEFAULT ''"),
         ("unsubscribe_token", "TEXT NOT NULL DEFAULT ''"),
+        ("preferred_yards", "TEXT NOT NULL DEFAULT ''"),
     ]
     for column, definition in user_columns:
         if USING_POSTGRES:
@@ -419,13 +421,15 @@ def get_user_by_email(email):
 
 def get_user_by_id(user_id):
     """Return (id, email, notify_daily_summary, notify_recently_found,
-    notify_watchlist_matches, first_name) for this user id, or None."""
+    notify_watchlist_matches, first_name, preferred_yards) for this user
+    id, or None. preferred_yards is a comma-separated string of yard
+    names, or '' meaning "every yard"."""
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(_q("""
         SELECT id, email, notify_daily_summary, notify_recently_found,
-               notify_watchlist_matches, first_name
+               notify_watchlist_matches, first_name, preferred_yards
         FROM users WHERE id = ?
     """), (user_id,))
     user = cursor.fetchone()
@@ -433,6 +437,19 @@ def get_user_by_id(user_id):
     conn.close()
 
     return user
+
+
+def update_preferred_yards(user_id, yards):
+    """Set which yards a user wants alerts about. `yards` is a list of
+    yard names - an empty list means "every yard", not "no yards", so
+    accidentally unchecking everything can't silently turn off alerts."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("UPDATE users SET preferred_yards = ? WHERE id = ?"), (",".join(yards), user_id))
+
+    conn.commit()
+    conn.close()
 
 
 def update_notification_preferences(user_id, daily_summary, recently_found, watchlist_matches):
@@ -531,13 +548,15 @@ def use_reset_token(token, used_at):
 def get_users_for_notifications():
     """Return every user's notification settings for the scraper to use:
     [(id, email, notify_daily_summary, notify_recently_found,
-    notify_watchlist_matches, unsubscribe_token), ...]."""
+    notify_watchlist_matches, unsubscribe_token, preferred_yards), ...].
+    preferred_yards is a comma-separated string of yard names, or ''
+    meaning "every yard"."""
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
         SELECT id, email, notify_daily_summary, notify_recently_found,
-               notify_watchlist_matches, unsubscribe_token
+               notify_watchlist_matches, unsubscribe_token, preferred_yards
         FROM users
     """)
     users = cursor.fetchall()

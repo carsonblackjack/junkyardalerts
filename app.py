@@ -105,11 +105,6 @@ for yard in YARDS:
 print(f"\nDone. Checked {total_count} vehicles, found {new_count} new.")
 
 new_vehicles.sort(key=lambda v: (v["make"], v["model"], v["year"]))
-recently_found_lines = [
-    f"{v['year']} {v['make']} {v['model']} - Yard: {v['yard']} - Row: {v['row']}"
-    for v in new_vehicles
-]
-recently_found_subject = f"YardWatch: {new_count} new vehicle(s) found"
 
 # Only send the full daily summary once a day (the scheduled 8am run passes
 # --summary). The other runs during the day still alert on new finds, they
@@ -125,17 +120,28 @@ if send_summary:
 
 # Every registered user gets exactly the emails they've opted into, in
 # their own settings - not one broadcast address for everyone.
-for user_id, email, notify_daily_summary, notify_recently_found, notify_watchlist_matches, unsubscribe_token in get_users_for_notifications():
+for user_id, email, notify_daily_summary, notify_recently_found, notify_watchlist_matches, unsubscribe_token, preferred_yards in get_users_for_notifications():
     unsubscribe_url = f"{WEBSITE_URL}/unsubscribe/{unsubscribe_token}"
 
-    if notify_recently_found and new_vehicles:
-        send_email(email, recently_found_subject, "\n".join(recently_found_lines), unsubscribe_url)
+    # Blank preferred_yards means "every yard" - only narrow the list
+    # down when the user actually picked specific ones.
+    yard_filter = set(preferred_yards.split(",")) if preferred_yards else None
+    user_vehicles = (
+        [v for v in new_vehicles if v["yard"] in yard_filter] if yard_filter else new_vehicles
+    )
+
+    if notify_recently_found and user_vehicles:
+        lines = [
+            f"{v['year']} {v['make']} {v['model']} - Yard: {v['yard']} - Row: {v['row']}"
+            for v in user_vehicles
+        ]
+        send_email(email, f"YardWatch: {len(user_vehicles)} new vehicle(s) found", "\n".join(lines), unsubscribe_url)
         print(f"Sent 'recently found' email to {email}.")
 
-    if notify_watchlist_matches and new_vehicles:
+    if notify_watchlist_matches and user_vehicles:
         watchlist = get_watchlist(user_id)
         personal_matches = [
-            v for v in new_vehicles
+            v for v in user_vehicles
             if any(
                 vehicle_matches_watchlist_item(v, make, model, year_from, year_to)
                 for _, make, model, year_from, year_to in watchlist

@@ -22,6 +22,15 @@
         My watchlist matches (only new cars matching my own watchlist)
     </label>
 
+    <h4>Which Yards</h4>
+    <p class="auth-lede">Leave all unchecked to get alerts from every yard. Check specific ones to only hear about those.</p>
+    {% for yard in all_yards %}
+        <label class="checkbox-row">
+            <input type="checkbox" name="preferred_yards" value="{{ yard }}" {% if yard in preferred_yards %}checked{% endif %}>
+            {{ yard }}
+        </label>
+    {% endfor %}
+
     <button type="submit">Save</button>
 </form>
 
