@@ -61,25 +61,31 @@ def send_email(to_email, subject, body, unsubscribe_url=None, include_link_foote
         raise Exception(f"SendGrid returned {response.status_code}: {response.text}")
 
 
-def _email_shell(eyebrow, heading, body_html, cta_text=None, cta_url=None, cta_note=None, signed=True):
+def _email_shell(heading, body_html, cta_text=None, cta_url=None, cta_note=None, signed=True):
     """Wraps a chunk of body HTML in the shared branded email card: the
-    animated header GIF, an eyebrow label, a heading, whatever content is
-    passed in, an optional CTA button, and a standard sign-off. Every
-    YardWatch email is built from this one shell so they all look like
-    they came from the same place. Table-based layout with inline styles
-    throughout - email clients (especially Outlook) don't reliably
-    support the CSS a normal webpage can use."""
+    animated header GIF, a heading, whatever content is passed in, an
+    optional CTA button, a closing hazard stripe, and a standard
+    sign-off. Every YardWatch email is built from this one shell so they
+    all look like they came from the same place.
+
+    The CTA button uses a border-bottom accent instead of the site's
+    cut-corner clip-path shape - clip-path isn't supported in Gmail (or
+    most email clients), so it was silently rendering as a plain
+    rectangle there. border-bottom is the same accent idea, but it's
+    just a border, which every client renders. Matches the bold,
+    full-width, uppercase treatment already used for the site's own
+    login/auth buttons, so email and site read as one system."""
     cta_block = ""
     if cta_text and cta_url:
         note_html = (
-            f'<p style="margin:14px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; '
+            f'<p style="margin:12px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; '
             f'color:#9aa0a8;">{cta_note}</p>'
         ) if cta_note else ""
         cta_block = f"""
-<tr><td style="padding:0 40px 8px;">
-  <table role="presentation" cellpadding="0" cellspacing="0">
-    <tr><td bgcolor="#b6522a" style="background-color:#b6522a; clip-path:polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);">
-      <a href="{cta_url}" style="display:inline-block; padding:14px 40px 14px 30px; font-family:Arial,Helvetica,sans-serif; font-size:14px; font-weight:bold; color:#ffffff; text-decoration:none;">{cta_text}</a>
+<tr><td style="padding:4px 40px 4px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr><td bgcolor="#b6522a" style="background-color:#b6522a; border-bottom:4px solid #8a3f21;">
+      <a href="{cta_url}" style="display:block; padding:16px 20px; font-family:Arial,Helvetica,sans-serif; font-size:14px; font-weight:bold; letter-spacing:0.06em; text-transform:uppercase; color:#ffffff; text-decoration:none; text-align:center;">{cta_text}</a>
     </td></tr>
   </table>
   {note_html}
@@ -89,7 +95,7 @@ def _email_shell(eyebrow, heading, body_html, cta_text=None, cta_url=None, cta_n
     sign_off = ""
     if signed:
         sign_off = """
-<p style="margin:20px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#23262a; border-top:1px solid #e4e0d7; padding-top:20px;">
+<p style="margin:20px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#23262a;">
   Carson<br><span style="color:#9aa0a8; font-size:12px;">Founder, YardWatch</span>
 </p>
 """
@@ -104,13 +110,14 @@ def _email_shell(eyebrow, heading, body_html, cta_text=None, cta_url=None, cta_n
 
 <tr><td><img src="{WEBSITE_URL}/static/email-header.gif" width="440" alt="YardWatch" style="display:block; width:100%; max-width:440px; height:auto;"></td></tr>
 
-<tr><td style="padding:32px 40px 8px;">
-  <p style="margin:0 0 10px; font-family:'Courier New',Courier,monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#9aa0a8;">{eyebrow}</p>
-  <h1 style="margin:0 0 18px; font-family:Arial,Helvetica,sans-serif; font-size:23px; font-weight:bold; color:#23262a; line-height:1.3;">{heading}</h1>
+<tr><td style="padding:34px 40px 6px;">
+  <h1 style="margin:0 0 16px; font-family:Arial,Helvetica,sans-serif; font-size:27px; font-weight:bold; letter-spacing:-0.01em; color:#23262a; line-height:1.15;">{heading}</h1>
   {body_html}
 </td></tr>
 {cta_block}
-<tr><td style="padding:22px 40px 36px;">{sign_off}</td></tr>
+<tr><td style="padding:26px 40px 28px;">{sign_off}</td></tr>
+
+<tr><td bgcolor="#c99236" style="height:5px; line-height:5px; font-size:0; background-color:#c99236; background-image:repeating-linear-gradient(-45deg, #c99236 0px, #c99236 10px, #23262a 10px, #23262a 20px);">&nbsp;</td></tr>
 
 </table>
 </td></tr>
@@ -121,13 +128,21 @@ def _email_shell(eyebrow, heading, body_html, cta_text=None, cta_url=None, cta_n
 
 
 def _vehicle_table_html(vehicles, limit=25):
-    """HTML table of vehicles for recently-found/watchlist-match emails.
-    Caps the list so a big batch doesn't make for a giant email - the
-    full list is always in the plain-text version too."""
+    """HTML table of vehicles for recently-found/watchlist-match emails,
+    with a real column header row (mono, uppercase, letter-spaced) -
+    the same treatment the site's own data tables use. Caps the list so
+    a big batch doesn't make for a giant email - the full list is
+    always in the plain-text version too."""
+    header = """
+<tr>
+  <th align="left" style="padding:0 0 8px; border-bottom:2px solid #23262a; font-family:'Courier New',Courier,monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:#6e737b; font-weight:normal;">Vehicle</th>
+  <th align="right" style="padding:0 0 8px; border-bottom:2px solid #23262a; font-family:'Courier New',Courier,monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:#6e737b; font-weight:normal;">Yard</th>
+</tr>
+"""
     rows = "".join(f"""
 <tr>
-  <td style="padding:8px 0; border-bottom:1px solid #e4e0d7; font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#23262a;">{v['year']} {v['make']} {v['model']}</td>
-  <td style="padding:8px 0; border-bottom:1px solid #e4e0d7; font-family:'Courier New',Courier,monospace; font-size:12px; color:#6e737b; text-align:right;">{v['yard']}</td>
+  <td style="padding:9px 0; border-bottom:1px solid #e4e0d7; font-family:Arial,Helvetica,sans-serif; font-size:13px; font-weight:bold; color:#23262a;">{v['year']} {v['make']} {v['model']}</td>
+  <td style="padding:9px 0; border-bottom:1px solid #e4e0d7; font-family:'Courier New',Courier,monospace; font-size:12px; color:#6e737b; text-align:right;">{v['yard']}</td>
 </tr>
 """ for v in vehicles[:limit])
 
@@ -139,7 +154,8 @@ def _vehicle_table_html(vehicles, limit=25):
         )
 
     return f"""\
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0 0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0;">
+{header}
 {rows}
 </table>
 {more_note}
@@ -160,7 +176,7 @@ def render_invite_email_html(code):
 </p>
 """
     return _email_shell(
-        "Exclusive Beta", "You're Invited to YardWatch", body,
+        "You're Invited to YardWatch", body,
         "Sign Up", f"{WEBSITE_URL}/register", cta_note="Enter your code above when you register.",
     )
 
@@ -174,7 +190,7 @@ def render_recently_found_html(vehicles):
 </p>
 {_vehicle_table_html(vehicles)}
 """
-    return _email_shell("New Inventory", f"{len(vehicles)} New Vehicle{'s' if len(vehicles) != 1 else ''} Found", body, "Browse Inventory", f"{WEBSITE_URL}/dashboard", signed=False)
+    return _email_shell(f"{len(vehicles)} New Vehicle{'s' if len(vehicles) != 1 else ''} Found", body, "Browse Inventory", f"{WEBSITE_URL}/dashboard", signed=False)
 
 
 def render_watchlist_matches_html(vehicles):
@@ -186,7 +202,7 @@ def render_watchlist_matches_html(vehicles):
 </p>
 {_vehicle_table_html(vehicles)}
 """
-    return _email_shell("Watchlist Match", f"{len(vehicles)} Match{'es' if len(vehicles) != 1 else ''} On Your Watchlist", body, "View Your Watchlist", f"{WEBSITE_URL}/dashboard", signed=False)
+    return _email_shell(f"{len(vehicles)} Match{'es' if len(vehicles) != 1 else ''} On Your Watchlist", body, "View Your Watchlist", f"{WEBSITE_URL}/dashboard", signed=False)
 
 
 def render_daily_summary_html(counts_by_yard, total_count, new_count):
@@ -207,7 +223,7 @@ def render_daily_summary_html(counts_by_yard, total_count, new_count):
 {rows}
 </table>
 """
-    return _email_shell("Daily Summary", "Today's Inventory", body, "Browse Inventory", f"{WEBSITE_URL}/dashboard", signed=False)
+    return _email_shell("Today's Inventory", body, "Browse Inventory", f"{WEBSITE_URL}/dashboard", signed=False)
 
 
 def render_password_reset_html(reset_url):
@@ -218,7 +234,7 @@ def render_password_reset_html(reset_url):
   Someone (hopefully you) asked to reset the password on your YardWatch account. This link works once and expires in an hour. If you didn't request this, you can safely ignore this email.
 </p>
 """
-    return _email_shell("Account Security", "Reset Your Password", body, "Reset Password", reset_url, signed=False)
+    return _email_shell("Reset Your Password", body, "Reset Password", reset_url, signed=False)
 
 
 def render_feedback_request_html():
@@ -229,7 +245,7 @@ def render_feedback_request_html():
   You've been using YardWatch this past week - got a minute to tell us how it's going? Good, bad, confusing, missing - all of it helps.
 </p>
 """
-    return _email_shell("Beta Feedback", "How's YardWatch Working For You?", body, "Leave Feedback", f"{WEBSITE_URL}/feedback", signed=False)
+    return _email_shell("How's YardWatch Working For You?", body, "Leave Feedback", f"{WEBSITE_URL}/feedback", signed=False)
 
 
 def render_win_back_html():
@@ -239,4 +255,4 @@ def render_win_back_html():
   Haven't seen you on YardWatch this past week. Your watchlist is still running in the background, checking every yard for you - log back in to see what's turned up.
 </p>
 """
-    return _email_shell("We Miss You", "Come See What's New", body, "Log Back In", f"{WEBSITE_URL}/login", signed=False)
+    return _email_shell("Come See What's New", body, "Log Back In", f"{WEBSITE_URL}/login", signed=False)
