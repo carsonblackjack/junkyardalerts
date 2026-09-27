@@ -22,7 +22,13 @@ from database.database import (
     save_vehicle,
     update_yard_sync,
 )
-from notifications.notifier import WEBSITE_URL, send_email
+from notifications.notifier import (
+    WEBSITE_URL,
+    render_daily_summary_html,
+    render_recently_found_html,
+    render_watchlist_matches_html,
+    send_email,
+)
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES, YARD_LOCATIONS as JALOPY_LOCATIONS, JalopyScraper
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES, TrustyPapScraper
 
@@ -135,7 +141,10 @@ for user_id, email, notify_daily_summary, notify_recently_found, notify_watchlis
             f"{v['year']} {v['make']} {v['model']} - Yard: {v['yard']} - Row: {v['row']}"
             for v in user_vehicles
         ]
-        send_email(email, f"YardWatch: {len(user_vehicles)} new vehicle(s) found", "\n".join(lines), unsubscribe_url)
+        send_email(
+            email, f"YardWatch: {len(user_vehicles)} new vehicle(s) found", "\n".join(lines), unsubscribe_url,
+            html_body=render_recently_found_html(user_vehicles),
+        )
         print(f"Sent 'recently found' email to {email}.")
 
     if notify_watchlist_matches and user_vehicles:
@@ -158,9 +167,13 @@ for user_id, email, notify_daily_summary, notify_recently_found, notify_watchlis
                 f"YardWatch: {len(personal_matches)} watchlist match(es) found",
                 "\n".join(lines),
                 unsubscribe_url,
+                html_body=render_watchlist_matches_html(personal_matches),
             )
             print(f"Sent watchlist match email to {email}.")
 
     if notify_daily_summary and send_summary:
-        send_email(email, "YardWatch Daily Summary", summary_body, unsubscribe_url)
+        send_email(
+            email, "YardWatch Daily Summary", summary_body, unsubscribe_url,
+            html_body=render_daily_summary_html(counts_by_yard, total_count, new_count),
+        )
         print(f"Sent daily summary email to {email}.")

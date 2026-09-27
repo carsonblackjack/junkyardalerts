@@ -45,7 +45,13 @@ from database.database import (
     update_preferred_yards,
     use_reset_token,
 )
-from notifications.notifier import ALERT_EMAIL_TO, WEBSITE_URL, render_invite_email_html, send_email
+from notifications.notifier import (
+    ALERT_EMAIL_TO,
+    WEBSITE_URL,
+    render_invite_email_html,
+    render_password_reset_html,
+    send_email,
+)
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES
 from web.turnstile import TURNSTILE_SITE_KEY, verify_turnstile
@@ -211,7 +217,10 @@ def forgot_password():
                 "This link works once and expires in an hour. If you didn't request this, you can "
                 "safely ignore this email - your password won't change unless you use the link above."
             )
-            send_email(email, "Reset your YardWatch password", body, include_link_footer=False)
+            send_email(
+                email, "Reset your YardWatch password", body,
+                include_link_footer=False, html_body=render_password_reset_html(reset_url),
+            )
 
         # Same message whether or not the email matched an account, so this
         # can't be used to check which emails are registered.
