@@ -127,12 +127,11 @@ def _email_shell(heading, body_html, cta_text=None, cta_url=None, cta_note=None,
 """
 
 
-def _vehicle_table_html(vehicles, limit=25):
-    """HTML table of vehicles for recently-found/watchlist-match emails,
-    with a real column header row (mono, uppercase, letter-spaced) -
-    the same treatment the site's own data tables use. Caps the list so
-    a big batch doesn't make for a giant email - the full list is
-    always in the plain-text version too."""
+def _vehicle_table_html(vehicles):
+    """HTML table of every vehicle passed in, for recently-found/
+    watchlist-match emails, with a real column header row (mono,
+    uppercase, letter-spaced) - the same treatment the site's own data
+    tables use."""
     header = """
 <tr>
   <th align="left" style="padding:0 0 8px; border-bottom:2px solid #23262a; font-family:'Courier New',Courier,monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:#6e737b; font-weight:normal;">Vehicle</th>
@@ -144,21 +143,13 @@ def _vehicle_table_html(vehicles, limit=25):
   <td style="padding:9px 0; border-bottom:1px solid #e4e0d7; font-family:Arial,Helvetica,sans-serif; font-size:13px; font-weight:bold; color:#23262a;">{v['year']} {v['make']} {v['model']}</td>
   <td style="padding:9px 0; border-bottom:1px solid #e4e0d7; font-family:'Courier New',Courier,monospace; font-size:12px; color:#6e737b; text-align:right;">{v['yard']}</td>
 </tr>
-""" for v in vehicles[:limit])
-
-    more_note = ""
-    if len(vehicles) > limit:
-        more_note = (
-            f'<p style="margin:10px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; '
-            f'color:#9aa0a8;">+ {len(vehicles) - limit} more - see the full list on the site.</p>'
-        )
+""" for v in vehicles)
 
     return f"""\
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0;">
 {header}
 {rows}
 </table>
-{more_note}
 """
 
 
