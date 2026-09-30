@@ -137,8 +137,8 @@ header {
     color: var(--text);
 }
 .mark-icon {
-    width: 40px;
-    height: 40px;
+    width: 56px;
+    height: 33px;
     flex: none;
 }
 header h1 {
