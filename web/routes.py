@@ -54,6 +54,8 @@ from notifications.notifier import (
 )
 from scraper.jalopy import ALL_MAKES as JALOPY_MAKES
 from scraper.trusty_pap import ALL_MAKES as TRUSTY_MAKES
+from scrape_job import get_yard_names
+from web.resync import get_resync_status, start_resync
 from web.turnstile import TURNSTILE_SITE_KEY, verify_turnstile
 
 routes = Blueprint("routes", __name__)
@@ -461,10 +463,17 @@ def admin():
         "counts_by_yard": counts_by_yard,
         "total_vehicles": total_vehicles,
         "viewer_is_super_admin": viewer_is_super_admin,
+        "yard_sync_times": get_yard_sync_times(),
     }
 
     if viewer_is_super_admin:
+        resync_running, resync_started_at, resync_started_by, resync_scope = get_resync_status()
         context.update(
+            resync_running=resync_running,
+            resync_started_at=resync_started_at,
+            resync_started_by=resync_started_by,
+            resync_scope=resync_scope,
+            resync_yard_names=get_yard_names(),
             top_searches=get_top_searches(),
             top_watchlist_demand=get_top_watchlist_demand(),
             unmet_searches=get_unmet_searches(),
@@ -480,6 +489,25 @@ def admin():
 def admin_set_admin(user_id):
     make_admin = request.form.get("make_admin") == "1"
     set_admin_status(user_id, make_admin)
+    return redirect(url_for("routes.admin"))
+
+
+@routes.route("/admin/resync", methods=["POST"])
+@super_admin_required
+def admin_resync():
+    admin_email = session["user_email"]
+    yard_name = request.form.get("yard", "").strip()
+
+    if yard_name and yard_name not in get_yard_names():
+        flash("That isn't a yard we check.")
+        return redirect(url_for("routes.admin"))
+
+    if start_resync(admin_email, yard_name or None):
+        scope = yard_name or "every yard"
+        how_long = "a few minutes" if yard_name else "10 minutes or more"
+        flash(f"Resync of {scope} started. It takes {how_long} - a report will be emailed to {admin_email} when it finishes.")
+    else:
+        flash("A resync is already running. You'll get the report by email when it finishes.")
     return redirect(url_for("routes.admin"))
 
 

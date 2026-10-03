@@ -6,9 +6,29 @@
 <p>Tracking <strong>{{ total_vehicles }}</strong> vehicles across {{ counts_by_yard|length }} yards.</p>
 <ul class="yard-counts">
     {% for yard, count in counts_by_yard %}
-        <li>{{ yard }}: {{ count }}</li>
+        <li>{{ yard }}: {{ count }} <span class="sync-time">(synced {{ yard_sync_times.get(yard)|relative_time }})</span></li>
     {% endfor %}
 </ul>
+
+{% if viewer_is_super_admin %}
+    <h3>Resync Yards</h3>
+    <p>Checks a yard right now, saves anything new, sends users their alerts, and emails you a report. One yard takes a few minutes, all of them 10 or more, so the report arrives by email rather than on this page.</p>
+    {% if resync_running %}
+        <p class="sync-time">A resync of {{ resync_scope }} is running now - started {{ resync_started_at|relative_time }} by {{ resync_started_by }}.</p>
+    {% else %}
+        <form method="post" action="{{ url_for('routes.admin_resync') }}" onsubmit="return confirm('Start this resync now? Users will get alert emails for anything new.');">
+            <label>Which Yard
+                <select name="yard">
+                    <option value="">All yards</option>
+                    {% for yard in resync_yard_names %}
+                        <option value="{{ yard }}">{{ yard }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button type="submit">Resync Now</button>
+        </form>
+    {% endif %}
+{% endif %}
 
 <h3>Users ({{ users|length }})</h3>
 {% if users %}

@@ -217,6 +217,54 @@ def render_daily_summary_html(counts_by_yard, total_count, new_count):
     return _email_shell("Today's Inventory", body, "Browse Inventory", f"{WEBSITE_URL}/dashboard", signed=False)
 
 
+def render_resync_report_html(stats):
+    """Admin-only report sent after a manual resync from the admin panel:
+    how much was checked, how long it took, and what turned up new per
+    yard. `stats` is the dict returned by scrape_job.run_scrape()."""
+    minutes = stats["seconds"] / 60
+    new_by_yard = stats["new_by_yard"]
+
+    if new_by_yard:
+        rows = "".join(f"""
+<tr>
+  <td style="padding:7px 0; border-bottom:1px solid #e4e0d7; font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#23262a;">{yard}</td>
+  <td style="padding:7px 0; border-bottom:1px solid #e4e0d7; font-family:'Courier New',Courier,monospace; font-size:13px; color:#6e737b; text-align:right;">{count:,}</td>
+</tr>
+""" for yard, count in sorted(new_by_yard.items()))
+        new_block = f"""\
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0 0;">
+<tr>
+  <th align="left" style="padding:0 0 8px; border-bottom:2px solid #23262a; font-family:'Courier New',Courier,monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:#6e737b; font-weight:normal;">New by yard</th>
+  <th align="right" style="padding:0 0 8px; border-bottom:2px solid #23262a; font-family:'Courier New',Courier,monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:#6e737b; font-weight:normal;">Vehicles</th>
+</tr>
+{rows}
+</table>
+"""
+    else:
+        new_block = """\
+<p style="margin:14px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; line-height:1.6; color:#4a4f56;">Nothing new turned up this time.</p>
+"""
+
+    skipped_note = ""
+    if stats["skipped_makes"]:
+        skipped_note = f"""\
+<p style="margin:14px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:1.6; color:#b6522a;">
+  {stats['skipped_makes']} make search{'es' if stats['skipped_makes'] != 1 else ''} failed and {'were' if stats['skipped_makes'] != 1 else 'was'} skipped - worth checking the logs.
+</p>
+"""
+
+    where = f"at {stats['yard_names'][0]}" if stats["yards_checked"] == 1 else f"across {stats['yards_checked']} yards"
+
+    body = f"""\
+<p style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:14px; line-height:1.6; color:#4a4f56;">
+  Checked {stats['total_count']:,} vehicles {where} in {minutes:.1f} minutes. {stats['new_count']:,} new. {stats['emails_sent']} alert email{'s' if stats['emails_sent'] != 1 else ''} sent to users.
+</p>
+{new_block}
+{skipped_note}
+"""
+    return _email_shell("Resync Complete", body, "Open Admin Panel", f"{WEBSITE_URL}/admin", signed=False)
+
+
 def render_password_reset_html(reset_url):
     """Password reset email - no sign-off, since it's a security
     notice, not a personal note."""
