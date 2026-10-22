@@ -1,76 +1,283 @@
-{% extends "base.html" %}
-{% block title %}YardWatch | Join the Public Beta{% endblock %}
-{% block meta_description %}YardWatch is in public beta. It checks Idaho junkyard inventory several times a day and emails you the moment a car you're watching for shows up. Free to join.{% endblock %}
-{% block og_description %}YardWatch is in public beta. It checks Idaho junkyard inventory several times a day and emails you the moment a car you're watching for shows up.{% endblock %}
-{% block content %}
-<div class="hero">
-    <div class="hero-grid">
-        <div class="hero-copy">
-            <p class="eyebrow">Public Beta &middot; Now Open</p>
-            <h2>Join the public beta.</h2>
-            <p>YardWatch checks Idaho junkyard inventory several times a day and emails you the moment a car you're after shows up. Free to use while we're in beta.</p>
-            <div class="hero-actions">
-                <a href="{{ url_for('routes.register') }}" class="cta-button cta-button-lg">Join the Public Beta</a>
-                <a href="{{ url_for('routes.login') }}" class="secondary">Already have an account? Log in</a>
-            </div>
-            <p class="hero-live"><span class="dot"></span>Tracking {{ "{:,}".format(total_vehicles) }} vehicles across {{ yard_count }} yards, live</p>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YardWatch | Join the Public Beta</title>
+<meta name="description" content="YardWatch is in public beta. It checks Idaho junkyard inventory several times a day and emails you the moment a car you're watching for shows up. Free to join.">
+<meta name="theme-color" content="#0D0E0E">
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+<meta property="og:title" content="YardWatch | Join the Public Beta">
+<meta property="og:description" content="YardWatch checks Idaho junkyard inventory several times a day and emails you the moment a car you're watching for shows up.">
+<meta property="og:image" content="{{ url_for('static', filename='og-image.png', _external=True) }}">
+<link rel="preload" href="{{ url_for('static', filename='fonts/big-shoulders-display-var.woff2') }}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{{ url_for('static', filename='fonts/inter-var.woff2') }}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{{ url_for('static', filename='landing/landing.css') }}">
+</head>
+<body>
+{% include "_car_symbol.html" %}
+<div style="position: relative; width: 100%; background: #0D0E0E; overflow-x: clip">
+
+<!-- NAV -->
+<header style="position: sticky; top: 0; z-index: 50; background: rgba(13,14,14,0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid #22262A">
+  <nav style="max-width: 1280px; margin: 0 auto; padding: 0 24px; min-height: 68px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px" aria-label="Main">
+    <a href="{{ url_for('routes.index') }}" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ECE8E1">
+      <svg width="46" height="27" viewBox="0 0 339 202" fill="#FF6B1A" aria-hidden="true"><use href="#yw-car"></use></svg>
+      <span class="disp" style="font-size: 26px; font-weight: 900; letter-spacing: 0.04em">Yard<span style="color: #FF6B1A">Watch</span></span>
+    </a>
+    <div class="navlinks" style="display: flex; align-items: center; gap: 28px">
+      <a class="navlink navhide" href="#how">How it works</a>
+      <a class="navlink navhide" href="#feed">Live feed</a>
+      <a class="navlink" href="{{ url_for('routes.login') }}">Log in</a>
+      <a class="btn btn-hot" href="{{ url_for('routes.register') }}" style="min-height: 44px; padding: 0 18px; font-size: 14px">Join the Beta</a>
+    </div>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section style="position: relative; min-height: 880px; display: flex; align-items: flex-end; overflow: hidden; border-bottom: 1px solid #22262A">
+  <svg class="heroimg" viewBox="0 0 339 202" aria-hidden="true"><use href="#yw-car"></use></svg>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(13,14,14,0.2) 0%, rgba(13,14,14,0.35) 35%, rgba(13,14,14,0.92) 78%, #0D0E0E 100%)"></div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background-image: linear-gradient(rgba(236,232,225,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(236,232,225,0.05) 1px, transparent 1px); background-size: 64px 64px"></div>
+  <svg aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.14; mix-blend-mode: overlay; pointer-events: none"><filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"></feTurbulence></filter><rect width="100%" height="100%" filter="url(#grain)"></rect></svg>
+  <div class="scanline" aria-hidden="true"></div>
+
+  <!-- viewfinder corners -->
+  <div aria-hidden="true" style="position: absolute; left: 24px; top: 24px; width: 36px; height: 36px; border-left: 2px solid #FF6B1A; border-top: 2px solid #FF6B1A"></div>
+  <div aria-hidden="true" style="position: absolute; right: 24px; top: 24px; width: 36px; height: 36px; border-right: 2px solid #FF6B1A; border-top: 2px solid #FF6B1A"></div>
+  <div aria-hidden="true" style="position: absolute; right: 24px; top: 72px; text-align: right; color: #B9B6AF; font-size: 11px; line-height: 1.8" class="mono">IDAHO / {{ yard_count }} YARDS<br>SCAN 4×/DAY<br><span style="color: #7CFF6B">● ONLINE</span></div>
+
+  <div class="herocopy" style="position: relative; width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 24px 96px; display: flex; flex-direction: column; gap: 28px">
+    <div class="rise d1 mono" style="display: inline-flex; align-self: flex-start; align-items: center; gap: 10px; padding: 8px 14px; border: 1px solid rgba(255,107,26,0.5); background: rgba(255,107,26,0.08); color: #FF8A47; font-size: 12px; font-weight: 700; border-radius: 3px">PUBLIC BETA <span style="color: #6E6B66">/</span> NOW OPEN</div>
+    <h1 class="disp" style="margin: 0; font-weight: 900; font-size: clamp(64px, 11vw, 168px); line-height: 0.86; color: #ECE8E1">
+      <span class="rise d2" style="display: block">Stop refreshing</span>
+      <span class="rise d3" style="display: block; color: transparent; -webkit-text-stroke: 2px #ECE8E1">junkyard</span>
+      <span class="rise d4" style="display: block">websites<span style="color: #FF6B1A">.</span></span>
+    </h1>
+    <div class="rise d5" style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 32px">
+      <p style="margin: 0; max-width: 520px; font-size: 20px; line-height: 1.5; color: #CFCBC4">YardWatch checks Idaho junkyard inventory for you, several times a day, and emails you the moment a car you're after shows up. Free while we're in beta.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px">
+        <a class="btn btn-hot" href="{{ url_for('routes.register') }}">Join the Public Beta
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </a>
+        <a class="btn btn-ghost" href="{{ url_for('routes.login') }}">Log in</a>
+      </div>
+    </div>
+    <div class="rise d5 mono" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding-top: 24px; border-top: 1px solid #2A2D30; color: #B9B6AF; font-size: 13px">
+      <span class="blink" style="width: 8px; height: 8px; border-radius: 50%; background: #7CFF6B; display: inline-block"></span>
+      <span>TRACKING <span style="color: #ECE8E1">{{ "{:,}".format(total_vehicles) }}</span> VEHICLES ACROSS <span style="color: #ECE8E1">{{ yard_count }}</span> YARDS RIGHT NOW</span>
+    </div>
+  </div>
+</section>
+
+<!-- HAZARD BAND -->
+<div aria-hidden="true" style="height: 14px; background: repeating-linear-gradient(-45deg, #FF6B1A 0 16px, #0D0E0E 16px 32px)"></div>
+
+<!-- SCROLL-LIT STATEMENT -->
+<section style="max-width: 1280px; margin: 0 auto; padding: 200px 24px">
+  <p class="disp" style="margin: 0; font-weight: 800; font-size: clamp(44px, 7vw, 104px); line-height: 0.98; display: flex; flex-direction: column; gap: 6px">
+    <span class="lit">The car you want is out there.</span>
+    <span class="lit" style="color: #FF6B1A">Somewhere in {{ "{:,}".format(total_vehicles) }} vehicles.</span>
+    <span class="lit">Across {{ yard_count }} Idaho yards.</span>
+    <span class="lit" style="color: #8C8A85">You shouldn't have to dig for it.</span>
+  </p>
+</section>
+
+<!-- LIVE MAP -->
+<section id="feed" style="position: relative; border-top: 1px solid #22262A; border-bottom: 1px solid #22262A; background: #111314">
+  <div style="max-width: 1280px; margin: 0 auto; padding: 120px 24px; display: flex; flex-direction: column; gap: 56px">
+    <div class="reveal" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 16px; max-width: 640px">
+        <div class="mono" style="color: #FF8A47; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 10px"><span class="blink" style="width: 8px; height: 8px; border-radius: 50%; background: #FF6B1A; display: inline-block"></span>HOW AN ALERT FEELS</div>
+        <h2 class="disp" style="margin: 0; font-weight: 900; font-size: clamp(48px, 6vw, 88px); line-height: 0.9">Watch the yards<br>light up.</h2>
+      </div>
+      <p style="margin: 0; max-width: 400px; color: #B9B6AF; font-size: 17px; line-height: 1.55">When a yard gets a vehicle that matches one of your watches, it pings. Here's what that looks like.</p>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: stretch">
+      <!-- Map panel -->
+      <div class="reveal" style="flex: 999 1 560px; min-width: 0; position: relative; border: 1px solid #2A2D30; border-radius: 8px; overflow: hidden; background-color: #0D0E0E; background-image: linear-gradient(rgba(236,232,225,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(236,232,225,0.045) 1px, transparent 1px); background-size: 40px 40px; padding: 48px 24px; display: flex; justify-content: center">
+        <div class="sweep" aria-hidden="true"></div>
+        <div class="mono" aria-hidden="true" style="position: absolute; left: 16px; top: 14px; font-size: 11px; color: #6E6B66">44.45°N</div>
+        <div class="mono" aria-hidden="true" style="position: absolute; left: 16px; bottom: 14px; font-size: 11px; color: #6E6B66">42.00°N</div>
+        <div class="mono" aria-hidden="true" style="position: absolute; right: 16px; top: 14px; font-size: 11px; color: #6E6B66">SECTOR: SOUTHERN ID</div>
+        <div class="mono" aria-hidden="true" style="position: absolute; right: 16px; bottom: 14px; font-size: 11px; color: #9A9A94">PINGS <span id="yw-count" style="color: #FF8A47">000</span></div>
+
+        <div style="position: relative; width: 100%; max-width: 440px; aspect-ratio: 400 / 414">
+          <img src="{{ url_for('static', filename='landing/idaho-south.svg') }}" alt="Map of southern Idaho showing the yards in the Treasure Valley and Twin Falls" width="400" height="414" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block">
+          <div id="yw-pins"></div>
         </div>
+      </div>
 
-        <div class="sample-alert" aria-label="Example of a YardWatch alert email">
-            <div class="sample-alert-label">Example alert</div>
-            <div class="sample-alert-title">3 matches on your watchlist</div>
-            <div class="sample-alert-row"><span class="vehicle">2003 SUBARU OUTBACK</span><span class="where">Nampa</span></div>
-            <div class="sample-alert-row"><span class="vehicle">2011 TOYOTA TACOMA</span><span class="where">Boise</span></div>
-            <div class="sample-alert-row"><span class="vehicle">2008 HONDA CIVIC</span><span class="where">Twin Falls</span></div>
-            <div class="sample-alert-cta" aria-hidden="true">View your watchlist</div>
+      <!-- Feed list -->
+      <aside class="reveal" style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; border: 1px solid #2A2D30; border-radius: 8px; background: #0D0E0E" aria-label="Sample recent finds">
+        <div class="mono" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid #2A2D30; font-size: 12px; font-weight: 700; color: #B9B6AF">
+          <span>RECENT FINDS</span>
+          <span style="color: #FF8A47">● SAMPLE FEED</span>
         </div>
+        <div style="display: flex; flex-direction: column; flex: 1" id="yw-feed"></div>
+        <div class="mono" style="padding: 14px 18px; font-size: 11px; color: #8C8A85; border-top: 1px solid #22262A">Demo feed. Sample finds shown for illustration.</div>
+      </aside>
     </div>
-</div>
+  </div>
+</section>
 
-<div class="section-stripe"></div>
+<!-- ZOOM SECTION -->
+<section class="zoomwrap" style="position: relative; height: 1800px">
+  <div style="position: sticky; top: 68px; height: 820px; overflow: hidden">
+    <div class="zoomimg wall" id="yw-wall" aria-hidden="true"></div>
+    <div aria-hidden="true" class="zoomimg" style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(13,14,14,0.25) 0%, rgba(13,14,14,0.35) 40%, rgba(13,14,14,0.94) 100%)"></div>
+    <div class="zoomhint mono" style="position: absolute; left: 0; right: 0; top: 40px; text-align: center; font-size: 12px; color: #B9B6AF">SCROLL</div>
+    <div class="zoomtext" style="position: absolute; left: 0; right: 0; bottom: 72px; max-width: 1280px; margin: 0 auto; padding: 0 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px">
+      <h2 class="disp" style="margin: 0; font-weight: 900; font-size: clamp(52px, 8vw, 128px); line-height: 0.88">Every yard.<br><span style="color: #FF6B1A">Every row.</span></h2>
+      <p style="margin: 0; max-width: 360px; font-size: 19px; line-height: 1.5; color: #ECE8E1">Checked four times a day, so you can stop checking at all.</p>
+    </div>
+  </div>
+</section>
 
-<h3>How It Works</h3>
-<div class="steps">
-    <div class="step">
-        <div class="step-num">01</div>
-        <h4>Search or Watch</h4>
-        <p>Search live inventory, or save a make, model, and year range you're after.</p>
-    </div>
-    <div class="step">
-        <div class="step-num">02</div>
-        <h4>We Check For You</h4>
-        <p>YardWatch checks every yard several times a day, so you don't have to.</p>
-    </div>
-    <div class="step">
-        <div class="step-num">03</div>
-        <h4>Get Emailed</h4>
-        <p>The moment a match shows up, it lands in your inbox instead of waiting on a page refresh.</p>
-    </div>
-</div>
+<!-- HOW IT WORKS -->
+<section id="how" style="max-width: 1280px; margin: 0 auto; padding: 160px 24px; display: flex; flex-direction: column; gap: 120px">
+  <div class="reveal" style="display: flex; flex-direction: column; gap: 16px">
+    <div class="mono" style="color: #FF8A47; font-size: 12px; font-weight: 700">HOW IT WORKS</div>
+    <h2 class="disp" style="margin: 0; font-weight: 900; font-size: clamp(48px, 6vw, 88px); line-height: 0.9">Three steps.<br>Zero refreshing.</h2>
+  </div>
 
-<h3>What's in the Beta</h3>
-<div class="features">
-    <div class="feature">
-        <h4>Watchlists</h4>
-        <p>Save a make, model, and year range. We keep watching so you don't have to.</p>
+  <!-- Step 01 -->
+  <div style="display: flex; flex-wrap: wrap; gap: 64px; align-items: center">
+    <div class="reveal" style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+      <div class="disp" style="font-size: 120px; font-weight: 900; line-height: 0.8; color: transparent; -webkit-text-stroke: 1.5px #FF6B1A">01</div>
+      <h3 class="disp" style="margin: 0; font-size: 48px; font-weight: 800; line-height: 1">Search or Watch</h3>
+      <p style="margin: 0; font-size: 18px; line-height: 1.6; color: #B9B6AF; max-width: 440px">Search live inventory, or save a make, model, and year range you're after.</p>
     </div>
-    <div class="feature">
-        <h4>Email Alerts</h4>
-        <p>New arrivals and watchlist matches, sent only when you want them.</p>
+    <div class="reveal tilt" style="flex: 1 1 440px; min-width: 0; border: 1px solid #2A2D30; border-radius: 10px; background: #111314; padding: 28px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 30px 80px rgba(0,0,0,0.45)">
+      <div class="mono" style="display: flex; justify-content: space-between; font-size: 11px; color: #8C8A85"><span>NEW WATCH</span><span>01 / 03</span></div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 6px"><span class="mono" style="font-size: 11px; color: #8C8A85">MAKE</span><div style="padding: 14px; border: 1px solid #3A3E42; border-radius: 4px; font-weight: 500">Chevrolet</div></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span class="mono" style="font-size: 11px; color: #8C8A85">MODEL</span><div style="padding: 14px; border: 1px solid #3A3E42; border-radius: 4px; font-weight: 500">Silverado 1500</div></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span class="mono" style="font-size: 11px; color: #8C8A85">YEARS</span><div style="padding: 14px; border: 1px solid #FF6B1A; border-radius: 4px; font-weight: 500">2014 – 2018</div></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span class="mono" style="font-size: 11px; color: #8C8A85">YARDS</span><div style="padding: 14px; border: 1px solid #3A3E42; border-radius: 4px; font-weight: 500">All {{ yard_count }}</div></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 6px">
+        <span style="font-size: 14px; color: #B9B6AF">Email me when it shows up</span>
+        <span aria-hidden="true" style="width: 46px; height: 26px; border-radius: 13px; background: #FF6B1A; position: relative; display: inline-block"><span style="position: absolute; right: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: #0D0E0E"></span></span>
+      </div>
     </div>
-    <div class="feature">
-        <h4>Pick Your Yards</h4>
-        <p>Only care about Nampa? Choose which yards you hear about.</p>
-    </div>
-    <div class="feature">
-        <h4>Explore Everything</h4>
-        <p>Browse every yard's current inventory and mark what you've spotted in person.</p>
-    </div>
-</div>
+  </div>
 
-<div class="cta-band">
-    <h3>Help shape it.</h3>
-    <p>It's a beta, so some things will be rough around the edges. Tell us what's broken and what's missing. Your feedback decides what gets built next.</p>
-    <a href="{{ url_for('routes.register') }}" class="cta-button cta-button-lg">Join the Public Beta</a>
+  <!-- Step 02 -->
+  <div style="display: flex; flex-wrap: wrap-reverse; gap: 64px; align-items: center">
+    <div class="reveal tilt" style="flex: 1 1 440px; min-width: 0; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #2A2D30; background: #111314" aria-hidden="true">
+      <div class="mono" style="display: flex; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #22262A; font-size: 11px; color: #8C8A85"><span><span class="blink" style="color: #7CFF6B">●</span> CHECKING {{ yard_count }} YARDS</span><span>4× / DAY</span></div>
+      <div class="mono">
+        <div class="scanrow"><span>2013 FORD FUSION</span><span>ROW 04</span></div>
+        <div class="scanrow"><span>2009 HONDA ACCORD</span><span>ROW 11</span></div>
+        <div class="scanrow match"><span><span style="background: #FF6B1A; color: #0D0E0E; padding: 2px 7px; margin-right: 10px; font-weight: 700; font-size: 10px">MATCH</span>2016 CHEVROLET SILVERADO 1500</span><span>ROW P</span></div>
+        <div class="scanrow"><span>2011 NISSAN ALTIMA</span><span>ROW 19</span></div>
+        <div class="scanrow"><span>2007 TOYOTA CAMRY</span><span>ROW 23</span></div>
+        <div class="scanrow"><span>2014 JEEP CHEROKEE</span><span>ROW 27</span></div>
+        <div class="scanrow"><span>2002 SUBARU LEGACY</span><span>ROW 31</span></div>
+        <div class="scanrow"><span>2018 RAM 1500</span><span>ROW 36</span></div>
+      </div>
+      <div class="scanline" style="animation-duration: 3.5s"></div>
+    </div>
+    <div class="reveal" style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+      <div class="disp" style="font-size: 120px; font-weight: 900; line-height: 0.8; color: transparent; -webkit-text-stroke: 1.5px #FF6B1A">02</div>
+      <h3 class="disp" style="margin: 0; font-size: 48px; font-weight: 800; line-height: 1">We Check For You</h3>
+      <p style="margin: 0; font-size: 18px; line-height: 1.6; color: #B9B6AF; max-width: 440px">YardWatch checks every yard several times a day, so you don't have to.</p>
+    </div>
+  </div>
+
+  <!-- Step 03 -->
+  <div style="display: flex; flex-wrap: wrap; gap: 64px; align-items: center">
+    <div class="reveal" style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+      <div class="disp" style="font-size: 120px; font-weight: 900; line-height: 0.8; color: transparent; -webkit-text-stroke: 1.5px #FF6B1A">03</div>
+      <h3 class="disp" style="margin: 0; font-size: 48px; font-weight: 800; line-height: 1">Get Emailed</h3>
+      <p style="margin: 0; font-size: 18px; line-height: 1.6; color: #B9B6AF; max-width: 440px">The moment a match shows up, it's in your inbox, not buried in a page refresh.</p>
+    </div>
+    <div class="reveal tilt" style="flex: 1 1 440px; min-width: 0; border: 1px solid #2A2D30; border-radius: 10px; background: #ECE8E1; color: #1A1C1E; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,0.45)" aria-label="Example alert email">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #D6D1C8">
+        <span style="width: 36px; height: 36px; border-radius: 50%; background: #0D0E0E; display: flex; align-items: center; justify-content: center; flex: none"><svg width="22" height="13" viewBox="0 0 339 202" fill="#FF6B1A" aria-hidden="true"><use href="#yw-car"></use></svg></span>
+        <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-weight: 600; font-size: 14px">YardWatch</span>
+          <span style="font-size: 13px; color: #4A4D50">Match found: 2016 Chevrolet Silverado 1500</span>
+        </div>
+        <span class="mono" style="margin-left: auto; font-size: 11px; color: #4A4D50">NOW</span>
+      </div>
+      <div class="mono" style="display: grid; grid-template-columns: auto 1fr; gap: 8px 22px; padding: 20px; font-size: 13px; border-bottom: 1px solid #D6D1C8">
+        <span style="color: #6E6B66">YEAR</span><span style="font-weight: 700">2016</span>
+        <span style="color: #6E6B66">MAKE</span><span style="font-weight: 700">CHEVROLET</span>
+        <span style="color: #6E6B66">MODEL</span><span style="font-weight: 700">SILVERADO 1500</span>
+        <span style="color: #6E6B66">YARD</span><span style="font-weight: 700">NAMPA</span>
+        <span style="color: #6E6B66">ROW</span><span style="font-weight: 700">P</span>
+      </div>
+      <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
+        <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #2A2D30">A vehicle matching your <strong>2014–2018 Silverado 1500</strong> watch just showed up in Nampa.</p>
+        <span class="btn" style="align-self: flex-start; background: #0D0E0E; color: #ECE8E1; min-height: 44px; font-size: 14px">View your watchlist</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section style="border-top: 1px solid #22262A; border-bottom: 1px solid #22262A; background: #111314">
+  <div style="max-width: 1280px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr))">
+    <div class="countup" style="padding: 64px 0; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid #22262A">
+      <span class="disp" style="font-size: clamp(72px, 9vw, 128px); font-weight: 900; line-height: 0.9">{{ "{:,}".format(total_vehicles) }}</span>
+      <span class="mono" style="font-size: 13px; color: #B9B6AF">VEHICLES TRACKED</span>
+    </div>
+    <div class="countup" style="padding: 64px 0 64px 40px; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid #22262A">
+      <span class="disp" style="font-size: clamp(72px, 9vw, 128px); font-weight: 900; line-height: 0.9; color: #FF6B1A">{{ yard_count }}</span>
+      <span class="mono" style="font-size: 13px; color: #B9B6AF">IDAHO YARDS CHECKED</span>
+    </div>
+    <div class="countup" style="padding: 64px 0 64px 40px; display: flex; flex-direction: column; gap: 8px">
+      <span class="disp" style="font-size: clamp(72px, 9vw, 128px); font-weight: 900; line-height: 0.9">4×</span>
+      <span class="mono" style="font-size: 13px; color: #B9B6AF">DAILY INVENTORY CHECKS</span>
+    </div>
+  </div>
+</section>
+
+<!-- FROM THE ROWS -->
+<section style="padding: 140px 0 120px; display: flex; flex-direction: column; gap: 40px; overflow: hidden">
+  <div class="reveal" style="max-width: 1280px; width: 100%; margin: 0 auto; padding: 0 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+    <h2 class="disp" style="margin: 0; font-weight: 900; font-size: clamp(44px, 5vw, 72px); line-height: 0.9">From the rows</h2>
+    <span class="mono" style="font-size: 12px; color: #8C8A85">SAMPLE FINDS · HOVER TO PAUSE</span>
+  </div>
+  <div style="overflow: hidden" aria-hidden="true">
+    <div class="track" id="yw-track"></div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section style="position: relative; border-top: 1px solid #22262A; overflow: hidden">
+  <div aria-hidden="true" style="position: absolute; inset: 0; background-image: linear-gradient(rgba(236,232,225,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(236,232,225,0.04) 1px, transparent 1px); background-size: 64px 64px"></div>
+  <div class="reveal" style="position: relative; max-width: 900px; margin: 0 auto; padding: 180px 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 28px">
+    <h2 class="disp" style="margin: 0; font-weight: 900; font-size: clamp(56px, 8vw, 120px); line-height: 0.88">Set a watch.<br><span style="color: #FF6B1A">Go do something else.</span></h2>
+    <p style="margin: 0; font-size: 19px; line-height: 1.5; color: #B9B6AF; max-width: 520px">Tell YardWatch what you're after. It'll keep an eye on the yards and email you when it turns up.</p>
+    <form id="yw-signup" style="display: flex; flex-wrap: wrap; gap: 10px; width: 100%; max-width: 520px; margin-top: 8px" action="{{ url_for('routes.register') }}" method="get">
+      <label for="yw-email" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Email address</label>
+      <input id="yw-email" class="email" type="email" placeholder="you@example.com" autocomplete="email">
+      <button class="btn btn-hot" type="submit" style="border: none; cursor: pointer; font-family: Inter, sans-serif">Join the Public Beta</button>
+    </form>
+    <span class="mono" style="font-size: 12px; color: #8C8A85">FREE DURING THE PUBLIC BETA</span>
+    <a href="{{ url_for('routes.login') }}" style="font-size: 14px">Already have an account? Log in</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div aria-hidden="true" style="height: 8px; background: repeating-linear-gradient(-45deg, #FF6B1A 0 12px, #0D0E0E 12px 24px)"></div>
+<footer style="max-width: 1280px; margin: 0 auto; padding: 40px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px">
+  <span class="disp" style="font-size: 22px; font-weight: 900; letter-spacing: 0.04em">Yard<span style="color: #FF6B1A">Watch</span></span>
+  <div style="display: flex; flex-wrap: wrap; gap: 24px">
+    <a class="navlink" href="{{ url_for('routes.terms') }}">Terms of Service</a>
+    <a class="navlink" href="{{ url_for('routes.eula') }}">EULA</a>
+    <a class="navlink" href="{{ url_for('routes.privacy') }}">Privacy Policy</a>
+  </div>
+  <span class="mono" style="font-size: 11px; color: #8C8A85">© {{ current_year }} YARDWATCH · IDAHO</span>
+</footer>
+
 </div>
-{% endblock %}
+<script src="{{ url_for('static', filename='landing/landing.js') }}" defer></script>
+</body>
+</html>

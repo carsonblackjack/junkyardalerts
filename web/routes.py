@@ -128,6 +128,7 @@ def index():
         "landing.html",
         total_vehicles=total_vehicles,
         yard_count=len(counts_by_yard),
+        current_year=datetime.now(timezone.utc).year,
     )
 
 
