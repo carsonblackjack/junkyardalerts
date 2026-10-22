@@ -82,7 +82,30 @@ input.email:focus{outline:2px solid #FF6B1A;outline-offset:1px}
   @keyframes fadeout{to{opacity:0;transform:translateY(-30px)}}
   .countup{animation:rise linear both;animation-timeline:view();animation-range:entry 10% cover 35%}
 }
+/* Sign up / log in pages */
+body.authpage{color-scheme:dark}
+.authmain{position:relative;overflow:hidden;display:flex;justify-content:center;padding:72px 16px 96px}
+.authgrid{position:absolute;inset:0;background-image:linear-gradient(rgba(236,232,225,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(236,232,225,0.04) 1px,transparent 1px);background-size:64px 64px}
+.authcard{position:relative;width:100%;max-width:460px;align-self:flex-start;padding:40px 36px;background:#111314;border:1px solid #2A2D30;border-top:3px solid #FF6B1A;border-radius:8px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.authtag{display:flex;align-items:center;gap:10px;color:#FF8A47;font-size:12px;font-weight:700}
+.authtag .blink{width:8px;height:8px;border-radius:50%;background:#FF6B1A;display:inline-block}
+.authtitle{margin:12px 0 0;font-weight:900;font-size:clamp(48px,8vw,72px);line-height:.9}
+.authlede{margin:14px 0 28px;color:#B9B6AF;font-size:16px;line-height:1.5}
+.authform{display:flex;flex-direction:column;gap:18px}
+.authform label{display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:600;color:#ECE8E1}
+.authform .opt{color:#8C8A85;font-weight:500}
+.authform input[type=text],.authform input[type=email],.authform input[type=password]{width:100%;min-height:50px;padding:0 14px;background:#16181A;border:1px solid #3A3E42;border-radius:4px;color:#ECE8E1;font-size:16px;font-family:Inter,sans-serif}
+.authform input::placeholder{color:#6E6B66}
+.authform input:focus{outline:2px solid #FF6B1A;outline-offset:1px}
+.authform .authcheck{flex-direction:row;align-items:flex-start;gap:12px;font-weight:400;color:#B9B6AF;line-height:1.45}
+.authform .authcheck input{width:18px;height:18px;margin:2px 0 0;flex:none;accent-color:#FF6B1A}
+.authsubmit{width:100%;border:none;cursor:pointer;font-family:Inter,sans-serif}
+.authalt{margin:24px 0 0;text-align:center;font-size:14px;color:#B9B6AF}
+.authflash{margin:0 0 22px;padding:12px 14px;list-style:none;background:rgba(255,107,26,.1);border:1px solid #FF6B1A;border-radius:4px;color:#ECE8E1;font-size:14px;line-height:1.45}
+.authflash li+li{margin-top:6px}
 @media (max-width:640px){
+  .authmain{padding:32px 12px 64px}
+  .authcard{padding:28px 20px}
   .pinhit{left:-8px;top:-8px;width:16px;height:16px}
   .navhide{display:none}
   header nav{flex-wrap:nowrap !important;gap:8px !important;padding:0 16px !important}

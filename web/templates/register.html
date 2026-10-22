@@ -1,31 +1,33 @@
-{% extends "base.html" %}
+{% extends "auth_dark.html" %}
+{% block title %}YardWatch | Sign Up{% endblock %}
 {% block content %}
-<div class="auth-card">
-    <h2>Sign Up</h2>
-    <p class="auth-lede">{% if invite_required %}YardWatch is in beta - you'll need an invite code to join.{% else %}YardWatch is in public beta. Free to join, no invite needed.{% endif %}</p>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <form method="post" class="stack">
-        <label>Invite Code{% if not invite_required %} (optional){% endif %}
-            <input type="text" name="invite_code" {% if invite_required %}required{% endif %}>
-        </label>
-        <label>First Name (optional)
-            <input type="text" name="first_name" placeholder="What should we call you?">
-        </label>
-        <label>Email
-            <input type="email" name="email" value="{{ request.form.get('email', '') }}" required>
-        </label>
-        <label>Password
-            <input type="password" name="password" required>
-        </label>
-        <label class="checkbox-row">
-            <input type="checkbox" name="agree_to_terms" required>
-            I agree to the <a href="{{ url_for('routes.terms') }}" target="_blank">Terms of Service</a> and <a href="{{ url_for('routes.privacy') }}" target="_blank">Privacy Policy</a>
-        </label>
-        <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
-        <button type="submit">Sign Up</button>
-    </form>
-    <p>Already have an account? <a href="{{ url_for('routes.login') }}">Log in</a></p>
-</div>
+<div class="mono authtag"><span class="blink"></span>PUBLIC BETA</div>
+<h1 class="disp authtitle">Sign up</h1>
+<p class="authlede">{% if invite_required %}YardWatch is in beta. You'll need an invite code to join.{% else %}YardWatch is in public beta. Free to join, no invite needed.{% endif %}</p>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<form method="post" class="authform">
+    <label><span>Invite code{% if not invite_required %} <span class="opt">(optional)</span>{% endif %}</span>
+        <input type="text" name="invite_code" autocomplete="off" {% if invite_required %}required{% endif %}>
+    </label>
+    <label><span>First name <span class="opt">(optional)</span></span>
+        <input type="text" name="first_name" placeholder="What should we call you?" autocomplete="given-name">
+    </label>
+    <label><span>Email</span>
+        <input type="email" name="email" value="{{ request.form.get('email', '') }}" autocomplete="email" required>
+    </label>
+    <label><span>Password</span>
+        <input type="password" name="password" autocomplete="new-password" required>
+    </label>
+    <label class="authcheck">
+        <input type="checkbox" name="agree_to_terms" required>
+        <span>I agree to the <a href="{{ url_for('routes.terms') }}" target="_blank">Terms of Service</a> and <a href="{{ url_for('routes.privacy') }}" target="_blank">Privacy Policy</a></span>
+    </label>
+    <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark"></div>
+    <button type="submit" class="btn btn-hot authsubmit">Sign up</button>
+</form>
+<p class="authalt">Already have an account? <a href="{{ url_for('routes.login') }}">Log in</a></p>
+{% endblock %}
+{% block scripts %}
 <script>
 // The landing page hands a typed email over through sessionStorage (not the
 // URL, so it stays out of logs and history). Fill it in once, then forget it.

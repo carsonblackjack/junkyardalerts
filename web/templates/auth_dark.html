@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}YardWatch{% endblock %}</title>
+<meta name="theme-color" content="#0D0E0E">
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+<link rel="preload" href="{{ url_for('static', filename='fonts/big-shoulders-display-var.woff2') }}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{{ url_for('static', filename='fonts/inter-var.woff2') }}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{{ url_for('static', filename='landing/landing.css') }}">
+</head>
+<body class="authpage">
+{% include "_car_symbol.html" %}
+
+<header style="border-bottom: 1px solid #22262A">
+  <nav style="max-width: 1280px; margin: 0 auto; padding: 0 24px; min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px" aria-label="Main">
+    <a href="{{ url_for('routes.index') }}" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ECE8E1">
+      <svg width="46" height="27" viewBox="0 0 339 202" fill="#FF6B1A" aria-hidden="true"><use href="#yw-car"></use></svg>
+      <span class="disp" style="font-size: 26px; font-weight: 900; letter-spacing: 0.04em">Yard<span style="color: #FF6B1A">Watch</span></span>
+    </a>
+    {% block header_link %}<a class="navlink" href="{{ url_for('routes.login') }}">Log in</a>{% endblock %}
+  </nav>
+</header>
+
+<main class="authmain">
+  <div aria-hidden="true" class="authgrid"></div>
+  <div class="authcard">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="authflash" role="alert">
+          {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</main>
+
+<div aria-hidden="true" style="height: 8px; background: repeating-linear-gradient(-45deg, #FF6B1A 0 12px, #0D0E0E 12px 24px)"></div>
+<footer style="max-width: 1280px; margin: 0 auto; padding: 32px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px">
+  <div style="display: flex; flex-wrap: wrap; gap: 24px">
+    <a class="navlink" href="{{ url_for('routes.terms') }}">Terms of Service</a>
+    <a class="navlink" href="{{ url_for('routes.eula') }}">EULA</a>
+    <a class="navlink" href="{{ url_for('routes.privacy') }}">Privacy Policy</a>
+  </div>
+  <span class="mono" style="font-size: 11px; color: #8C8A85">YARDWATCH · IDAHO</span>
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>
