@@ -1,20 +1,20 @@
-{% extends "base.html" %}
+{% extends "auth_dark.html" %}
+{% block title %}YardWatch | Log In{% endblock %}
+{% block header_link %}<a class="navlink" href="{{ url_for('routes.register') }}">Sign up</a>{% endblock %}
 {% block content %}
-<div class="auth-card">
-    <h2>Welcome Back</h2>
-    <p class="auth-lede">Your watchlist's been checking the yards while you were away.</p>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <form method="post" class="stack">
-        <label>Email
-            <input type="email" name="email" required>
-        </label>
-        <label>Password
-            <input type="password" name="password" required>
-        </label>
-        <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
-        <button type="submit">Log In</button>
-    </form>
-    <p><a href="{{ url_for('routes.forgot_password') }}">Forgot your password?</a></p>
-    <p>Don't have an account? <a href="{{ url_for('routes.register') }}">Sign up</a></p>
-</div>
+<h1 class="disp authtitle">Welcome back</h1>
+<p class="authlede">Your watchlist's been checking the yards while you were away.</p>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<form method="post" class="authform">
+    <label><span>Email</span>
+        <input type="email" name="email" autocomplete="email" required>
+    </label>
+    <label><span>Password</span>
+        <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark"></div>
+    <button type="submit" class="btn btn-hot authsubmit">Log in</button>
+</form>
+<p class="authalt"><a href="{{ url_for('routes.forgot_password') }}">Forgot your password?</a></p>
+<p class="authalt" style="margin-top: 10px">Don't have an account? <a href="{{ url_for('routes.register') }}">Sign up</a></p>
 {% endblock %}
