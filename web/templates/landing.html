@@ -93,7 +93,7 @@
         <div class="mono" style="color: #FF8A47; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 10px"><span class="blink" style="width: 8px; height: 8px; border-radius: 50%; background: #FF6B1A; display: inline-block"></span>HOW AN ALERT FEELS</div>
         <h2 class="disp" style="margin: 0; font-weight: 900; font-size: clamp(48px, 6vw, 88px); line-height: 0.9">Watch the yards<br>light up.</h2>
       </div>
-      <p style="margin: 0; max-width: 400px; color: #B9B6AF; font-size: 17px; line-height: 1.55">When a yard gets a vehicle that matches one of your watches, it pings. Here's what that looks like.</p>
+      <p style="margin: 0; max-width: 400px; color: #B9B6AF; font-size: 17px; line-height: 1.55">When a yard gets a vehicle that matches one of your watches, it pings. Hover a yard on the map to see what's there right now.</p>
     </div>
 
     <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: stretch">
@@ -102,6 +102,7 @@
         <div class="sweep" aria-hidden="true"></div>
         <div class="mono" aria-hidden="true" style="position: absolute; left: 16px; top: 14px; font-size: 11px; color: #6E6B66">44.45°N</div>
         <div class="mono" aria-hidden="true" style="position: absolute; left: 16px; bottom: 14px; font-size: 11px; color: #6E6B66">42.00°N</div>
+        <div class="mono" aria-hidden="true" style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 14px; font-size: 11px; color: #8C8A85; white-space: nowrap">HOVER OR TAP A YARD</div>
         <div class="mono" aria-hidden="true" style="position: absolute; right: 16px; top: 14px; font-size: 11px; color: #6E6B66">SECTOR: SOUTHERN ID</div>
         <div class="mono" aria-hidden="true" style="position: absolute; right: 16px; bottom: 14px; font-size: 11px; color: #9A9A94">PINGS <span id="yw-count" style="color: #FF8A47">000</span></div>
 
@@ -173,7 +174,7 @@
       <div class="mono">
         <div class="scanrow"><span>2013 FORD FUSION</span><span>ROW 04</span></div>
         <div class="scanrow"><span>2009 HONDA ACCORD</span><span>ROW 11</span></div>
-        <div class="scanrow match"><span><span style="background: #FF6B1A; color: #0D0E0E; padding: 2px 7px; margin-right: 10px; font-weight: 700; font-size: 10px">MATCH</span>2016 CHEVROLET SILVERADO 1500</span><span>ROW P</span></div>
+        <div class="scanrow match"><span><span style="background: #FF6B1A; color: #0D0E0E; padding: 2px 7px; margin-right: 10px; font-weight: 700; font-size: 10px">MATCH</span>2016 CHEVROLET SILVERADO 1500</span><span>ROW 112</span></div>
         <div class="scanrow"><span>2011 NISSAN ALTIMA</span><span>ROW 19</span></div>
         <div class="scanrow"><span>2007 TOYOTA CAMRY</span><span>ROW 23</span></div>
         <div class="scanrow"><span>2014 JEEP CHEROKEE</span><span>ROW 27</span></div>
@@ -210,7 +211,7 @@
         <span style="color: #6E6B66">MAKE</span><span style="font-weight: 700">CHEVROLET</span>
         <span style="color: #6E6B66">MODEL</span><span style="font-weight: 700">SILVERADO 1500</span>
         <span style="color: #6E6B66">YARD</span><span style="font-weight: 700">NAMPA</span>
-        <span style="color: #6E6B66">ROW</span><span style="font-weight: 700">P</span>
+        <span style="color: #6E6B66">ROW</span><span style="font-weight: 700">112</span>
       </div>
       <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
         <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #2A2D30">A vehicle matching your <strong>2014–2018 Silverado 1500</strong> watch just showed up in Nampa.</p>
@@ -278,6 +279,7 @@
 </footer>
 
 </div>
+<script id="yw-yards" type="application/json">{{ yards|tojson }}</script>
 <script src="{{ url_for('static', filename='landing/landing.js') }}" defer></script>
 </body>
 </html>

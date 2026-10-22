@@ -976,6 +976,26 @@ def get_inventory_counts_by_yard():
     return counts
 
 
+def get_recent_vehicles_for_yard(yard, limit=3):
+    """Return the newest [(year, make, model, row_location, date_found), ...]
+    for one yard."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(_q("""
+        SELECT year, make, model, row_location, date_found
+        FROM vehicles
+        WHERE yard = ?
+        ORDER BY date_found DESC, id DESC
+        LIMIT ?
+    """), (yard, limit))
+    vehicles = cursor.fetchall()
+
+    conn.close()
+
+    return vehicles
+
+
 def get_distinct_yards():
     """Return every yard name we've seen, sorted, for the Explore yard picker."""
     conn = get_connection()

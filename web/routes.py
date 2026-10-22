@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 
@@ -23,6 +24,7 @@ from database.database import (
     get_inventory_counts_by_yard,
     get_matches_grouped,
     get_recent_vehicles,
+    get_recent_vehicles_for_yard,
     get_user_by_email,
     get_user_by_id,
     get_top_searches,
@@ -116,18 +118,53 @@ def super_admin_required(view):
     return wrapped
 
 
+# The public landing page shows each yard by city only (no yard brand
+# names). "key" ties a yard to its pin on the map; Caldwell has two yards.
+LANDING_YARD_PREFIX = "Jalopy Jungle "
+LANDING_EXTRA_YARDS = {"Trusty Pick-A-Part": ("Caldwell", "caldwell-2")}
+LANDING_CACHE_SECONDS = 60
+_landing_cache = {"at": 0.0, "yards": []}
+
+
+def get_landing_yards():
+    """[{key, city, count, recent: [{title, row, date}, ...]}, ...] for the
+    landing page's interactive map. Cached briefly since every anonymous
+    visitor hits this."""
+    now = time.monotonic()
+    if _landing_cache["yards"] and now - _landing_cache["at"] < LANDING_CACHE_SECONDS:
+        return _landing_cache["yards"]
+
+    yards = []
+    for yard, count in sorted(get_inventory_counts_by_yard()):
+        if yard.startswith(LANDING_YARD_PREFIX):
+            city = yard[len(LANDING_YARD_PREFIX):]
+            key = city.lower().replace(" ", "-")
+        elif yard in LANDING_EXTRA_YARDS:
+            city, key = LANDING_EXTRA_YARDS[yard]
+        else:
+            continue
+        recent = [
+            {"title": f"{year} {make} {model}", "row": row, "date": date_found}
+            for year, make, model, row, date_found in get_recent_vehicles_for_yard(yard, 3)
+        ]
+        yards.append({"key": key, "city": city, "count": count, "recent": recent})
+
+    _landing_cache.update(at=now, yards=yards)
+    return yards
+
+
 @routes.route("/")
 def index():
     if "user_id" in session:
         return redirect(url_for("routes.dashboard"))
 
-    counts_by_yard = get_inventory_counts_by_yard()
-    total_vehicles = sum(count for _, count in counts_by_yard)
+    yards = get_landing_yards()
 
     return render_template(
         "landing.html",
-        total_vehicles=total_vehicles,
-        yard_count=len(counts_by_yard),
+        total_vehicles=sum(yard["count"] for yard in yards),
+        yard_count=len(yards),
+        yards=yards,
         current_year=datetime.now(timezone.utc).year,
     )
 
