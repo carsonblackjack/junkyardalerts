@@ -12,7 +12,7 @@
     { name: 'GARDEN CITY', key: 'garden-city', x: 112, y: 132 },
     { name: 'NAMPA', key: 'nampa', x: 81.5, y: 150 },
     { name: 'CALDWELL', key: 'caldwell', x: 66.8, y: 129.9 },
-    { name: 'CALDWELL', key: 'caldwell-2', x: 77, y: 119 },
+    { name: 'CALDWELL (TRUSTY)', key: 'caldwell-2', x: 77, y: 119 },
     { name: 'TWIN FALLS', key: 'twin-falls', x: 329.9, y: 312.5 }
   ];
 

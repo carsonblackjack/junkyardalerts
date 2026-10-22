@@ -121,7 +121,7 @@ def super_admin_required(view):
 # The public landing page shows each yard by city only (no yard brand
 # names). "key" ties a yard to its pin on the map; Caldwell has two yards.
 LANDING_YARD_PREFIX = "Jalopy Jungle "
-LANDING_EXTRA_YARDS = {"Trusty Pick-A-Part": ("Caldwell", "caldwell-2")}
+LANDING_EXTRA_YARDS = {"Trusty Pick-A-Part": ("Caldwell (Trusty)", "caldwell-2")}
 LANDING_CACHE_SECONDS = 60
 _landing_cache = {"at": 0.0, "yards": []}
 
