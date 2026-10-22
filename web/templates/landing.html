@@ -1,15 +1,30 @@
 {% extends "base.html" %}
-{% block meta_description %}YardWatch checks Idaho junkyard inventory several times a day and emails you when a car you're watching for shows up.{% endblock %}
+{% block title %}YardWatch | Join the Public Beta{% endblock %}
+{% block meta_description %}YardWatch is in public beta. It checks Idaho junkyard inventory several times a day and emails you the moment a car you're watching for shows up. Free to join.{% endblock %}
+{% block og_description %}YardWatch is in public beta. It checks Idaho junkyard inventory several times a day and emails you the moment a car you're watching for shows up.{% endblock %}
 {% block content %}
 <div class="hero">
-    <p class="eyebrow">Exclusive Beta</p>
-    <h2>Stop refreshing junkyard websites.</h2>
-    <p>YardWatch checks Idaho junkyard inventory for you, several times a day, and emails you the moment a car you're after shows up.</p>
-    <div class="hero-actions">
-        <a href="{{ url_for('routes.register') }}" class="cta-button cta-button-lg">Sign Up Free</a>
-        <a href="{{ url_for('routes.login') }}" class="secondary">Already have an account? Log in</a>
+    <div class="hero-grid">
+        <div class="hero-copy">
+            <p class="eyebrow">Public Beta &middot; Now Open</p>
+            <h2>Join the public beta.</h2>
+            <p>YardWatch checks Idaho junkyard inventory several times a day and emails you the moment a car you're after shows up. Free to use while we're in beta.</p>
+            <div class="hero-actions">
+                <a href="{{ url_for('routes.register') }}" class="cta-button cta-button-lg">Join the Public Beta</a>
+                <a href="{{ url_for('routes.login') }}" class="secondary">Already have an account? Log in</a>
+            </div>
+            <p class="hero-live"><span class="dot"></span>Tracking {{ "{:,}".format(total_vehicles) }} vehicles across {{ yard_count }} yards, live</p>
+        </div>
+
+        <div class="sample-alert" aria-label="Example of a YardWatch alert email">
+            <div class="sample-alert-label">Example alert</div>
+            <div class="sample-alert-title">3 matches on your watchlist</div>
+            <div class="sample-alert-row"><span class="vehicle">2003 SUBARU OUTBACK</span><span class="where">Nampa</span></div>
+            <div class="sample-alert-row"><span class="vehicle">2011 TOYOTA TACOMA</span><span class="where">Boise</span></div>
+            <div class="sample-alert-row"><span class="vehicle">2008 HONDA CIVIC</span><span class="where">Twin Falls</span></div>
+            <div class="sample-alert-cta" aria-hidden="true">View your watchlist</div>
+        </div>
     </div>
-    <p class="hero-live"><span class="dot"></span>Tracking {{ "{:,}".format(total_vehicles) }} vehicles across {{ yard_count }} yards right now</p>
 </div>
 
 <div class="section-stripe"></div>
@@ -29,13 +44,33 @@
     <div class="step">
         <div class="step-num">03</div>
         <h4>Get Emailed</h4>
-        <p>The moment a match shows up, it's in your inbox - not buried in a page refresh.</p>
+        <p>The moment a match shows up, it lands in your inbox instead of waiting on a page refresh.</p>
     </div>
 </div>
 
-<div class="stat-tiles">
-    <div class="stat-tile"><span class="stat-value">{{ "{:,}".format(total_vehicles) }}</span><span class="stat-label">vehicles tracked</span></div>
-    <div class="stat-tile"><span class="stat-value">{{ yard_count }}</span><span class="stat-label">Idaho yards checked</span></div>
-    <div class="stat-tile"><span class="stat-value">4&times;</span><span class="stat-label">daily inventory checks</span></div>
+<h3>What's in the Beta</h3>
+<div class="features">
+    <div class="feature">
+        <h4>Watchlists</h4>
+        <p>Save a make, model, and year range. We keep watching so you don't have to.</p>
+    </div>
+    <div class="feature">
+        <h4>Email Alerts</h4>
+        <p>New arrivals and watchlist matches, sent only when you want them.</p>
+    </div>
+    <div class="feature">
+        <h4>Pick Your Yards</h4>
+        <p>Only care about Nampa? Choose which yards you hear about.</p>
+    </div>
+    <div class="feature">
+        <h4>Explore Everything</h4>
+        <p>Browse every yard's current inventory and mark what you've spotted in person.</p>
+    </div>
+</div>
+
+<div class="cta-band">
+    <h3>Help shape it.</h3>
+    <p>It's a beta, so some things will be rough around the edges. Tell us what's broken and what's missing. Your feedback decides what gets built next.</p>
+    <a href="{{ url_for('routes.register') }}" class="cta-button cta-button-lg">Join the Public Beta</a>
 </div>
 {% endblock %}

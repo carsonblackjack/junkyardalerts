@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 
@@ -59,6 +60,16 @@ from web.resync import get_resync_status, start_resync
 from web.turnstile import TURNSTILE_SITE_KEY, verify_turnstile
 
 routes = Blueprint("routes", __name__)
+
+# The beta is public: anyone can sign up, and invite codes are optional
+# (they still get tracked, so you can see who came from an invite). Set
+# REQUIRE_INVITE_CODE=1 in the environment to go back to invite-only.
+REQUIRE_INVITE_CODE = os.getenv("REQUIRE_INVITE_CODE", "").lower() in ("1", "true", "yes")
+
+
+@routes.app_context_processor
+def inject_invite_setting():
+    return {"invite_required": REQUIRE_INVITE_CODE}
 
 # Every make either yard's website lets you search for, combined.
 ALL_MAKES = sorted(set(JALOPY_MAKES) | set(TRUSTY_MAKES))
@@ -140,7 +151,7 @@ def register():
             flash("You need to agree to the Terms of Service and Privacy Policy to sign up.")
             return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
-        if not invite_code:
+        if REQUIRE_INVITE_CODE and not invite_code:
             flash("An invite code is required to sign up during the beta.")
             return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
@@ -151,15 +162,19 @@ def register():
             flash("An account with that email already exists.")
             return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
-        if not redeem_invite_code(invite_code, email, datetime.now(timezone.utc).isoformat()):
+        if invite_code and not redeem_invite_code(invite_code, email, datetime.now(timezone.utc).isoformat()):
             delete_user_account(user_id)
-            flash("That invite code isn't valid or has already been used.")
+            message = "That invite code isn't valid or has already been used."
+            if not REQUIRE_INVITE_CODE:
+                message += " Clear the box to sign up without one."
+            flash(message)
             return render_template("register.html", turnstile_site_key=TURNSTILE_SITE_KEY)
 
         if ALERT_EMAIL_TO:
             send_email(
                 ALERT_EMAIL_TO, "New YardWatch signup",
-                f"{email} just signed up" + (f" ({first_name})" if first_name else "") + f", using invite code {invite_code}.",
+                f"{email} just signed up" + (f" ({first_name})" if first_name else "")
+                + (f", using invite code {invite_code}." if invite_code else " from the public beta, no invite code."),
                 include_link_footer=False,
             )
 

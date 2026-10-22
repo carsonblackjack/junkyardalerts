@@ -24,6 +24,9 @@ services:
         sync: false
       - key: TURNSTILE_SECRET_KEY
         sync: false
+      # Leave unset for a public beta. Set to 1 to require an invite code.
+      - key: REQUIRE_INVITE_CODE
+        sync: false
       - key: SENTRY_DSN
         sync: false
       - key: DATABASE_URL

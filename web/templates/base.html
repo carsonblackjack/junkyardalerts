@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{% block meta_description %}YardWatch checks Idaho junkyard inventory (Jalopy Jungle and Trusty Pick-A-Part) several times a day and emails you when a car, part, or year you're watching for shows up.{% endblock %}">
-    <title>YardWatch</title>
+    <title>{% block title %}YardWatch{% endblock %}</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
-    <meta property="og:title" content="YardWatch">
+    <meta property="og:title" content="{{ self.title() }}">
     <meta property="og:description" content="{% block og_description %}YardWatch checks Idaho junkyard inventory several times a day and emails you when a car you're watching for shows up.{% endblock %}">
     <meta property="og:image" content="{{ url_for('static', filename='og-image.png', _external=True) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">

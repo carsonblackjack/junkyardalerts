@@ -76,7 +76,11 @@
 
 {% if viewer_is_super_admin %}
     <h3>Invite Codes</h3>
-    <p>Registration requires one of these during the beta. Each code works once.</p>
+    {% if invite_required %}
+        <p>Registration requires one of these during the beta. Each code works once.</p>
+    {% else %}
+        <p>The beta is public, so a code is optional. Codes still track who you invited. Each code works once.</p>
+    {% endif %}
 
     <h4>Invite Someone by Email</h4>
     <p>Generates a code and emails it to them directly, with a link to sign up.</p>

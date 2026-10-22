@@ -2,11 +2,11 @@
 {% block content %}
 <div class="auth-card">
     <h2>Sign Up</h2>
-    <p class="auth-lede">YardWatch is in beta - you'll need an invite code to join.</p>
+    <p class="auth-lede">{% if invite_required %}YardWatch is in beta - you'll need an invite code to join.{% else %}YardWatch is in public beta. Free to join, no invite needed.{% endif %}</p>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <form method="post" class="stack">
-        <label>Invite Code
-            <input type="text" name="invite_code" required>
+        <label>Invite Code{% if not invite_required %} (optional){% endif %}
+            <input type="text" name="invite_code" {% if invite_required %}required{% endif %}>
         </label>
         <label>First Name (optional)
             <input type="text" name="first_name" placeholder="What should we call you?">
